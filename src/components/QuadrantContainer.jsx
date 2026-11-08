@@ -5,6 +5,7 @@ import {
   BookOpen, 
   Timer, 
   History, 
+  Circle,
   Square, 
   GripHorizontal,
   ChevronDown,
@@ -18,6 +19,7 @@ export const WIDGET_OPTIONS = [
   { id: 'chords', name: 'Detector de Acordes', icon: Music },
   { id: 'metronome', name: 'Metrónomo Digital', icon: Timer },
   { id: 'history', name: 'Progresión Armónica', icon: History },
+  { id: 'recorder', name: 'Grabadora y Looper MIDI', icon: Circle },
   { id: 'empty', name: 'Cuadrante Vacío', icon: Square }
 ];
 

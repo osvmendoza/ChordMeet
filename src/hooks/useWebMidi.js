@@ -1,13 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { synth } from '../utils/audioSynth';
 
-export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {}) {
+export function useWebMidi({ 
+  playAudio = true, 
+  holdNotesWithSustain = true,
+  defaultChannel = '1' // '1', 'all', '2'..'16'
+} = {}) {
   const [activeNotes, setActiveNotes] = useState([]); // Array of sorted MIDI numbers currently pressed physically
   const [sustainedNotes, setSustainedNotes] = useState([]); // Notes held by sustain pedal after key release
   const [sustainPedal, setSustainPedal] = useState(false);
   const [sustainValue, setSustainValue] = useState(0);
   const [inputs, setInputs] = useState([]);
   const [selectedInputId, setSelectedInputId] = useState('all');
+  const [selectedChannel, setSelectedChannel] = useState(defaultChannel); // Filter by channel
+  const [invertPedalPolarity, setInvertPedalPolarity] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,6 +23,8 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
   const sustainPedalRef = useRef(false);
   const playAudioRef = useRef(playAudio);
   const holdNotesWithSustainRef = useRef(holdNotesWithSustain);
+  const selectedChannelRef = useRef(selectedChannel);
+  const invertPedalPolarityRef = useRef(invertPedalPolarity);
   const midiAccessRef = useRef(null);
 
   useEffect(() => {
@@ -27,6 +35,14 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
   useEffect(() => {
     holdNotesWithSustainRef.current = holdNotesWithSustain;
   }, [holdNotesWithSustain]);
+
+  useEffect(() => {
+    selectedChannelRef.current = selectedChannel;
+  }, [selectedChannel]);
+
+  useEffect(() => {
+    invertPedalPolarityRef.current = invertPedalPolarity;
+  }, [invertPedalPolarity]);
 
   // Synchronize state from sets
   const syncActiveNotesState = useCallback(() => {
@@ -50,7 +66,6 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
     activeNotesRef.current.delete(midi);
 
     if (sustainPedalRef.current && holdNotesWithSustainRef.current) {
-      // Keep note in sustainedNotes set so it still resonates visually/audibly
       sustainedNotesRef.current.add(midi);
     } else {
       if (playAudioRef.current) {
@@ -62,13 +77,14 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
 
   // Handle sustain pedal state changes
   const handleSustainChange = useCallback((value) => {
-    const isEngaged = value >= 64;
+    const isInverted = invertPedalPolarityRef.current;
+    const isEngaged = isInverted ? value < 64 : value >= 64;
     setSustainValue(value);
     setSustainPedal(isEngaged);
     sustainPedalRef.current = isEngaged;
 
     if (!isEngaged) {
-      // Pedal released: release all notes in sustainedNotesRef that are not still held down physically
+      // Pedal released: stop ringing notes that were released while pedal was held
       sustainedNotesRef.current.forEach((midi) => {
         if (!activeNotesRef.current.has(midi)) {
           if (playAudioRef.current) {
@@ -85,7 +101,12 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
   const handleMidiMessage = useCallback((event) => {
     const [statusByte, data1, data2] = event.data;
     const command = statusByte >> 4;
-    // const channel = statusByte & 0xf;
+    const messageChannel = (statusByte & 0x0f) + 1; // MIDI channel (1 to 16)
+
+    // Filter by MIDI Channel if not 'all'
+    if (selectedChannelRef.current !== 'all' && messageChannel !== Number(selectedChannelRef.current)) {
+      return; // Ignore messages from other channels
+    }
 
     // 0x9 = Note On
     if (command === 0x9) {
@@ -95,7 +116,7 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
       if (velocity > 0) {
         triggerNoteOn(midiNote, velocity / 127);
       } else {
-        // Some keyboards send Note On with velocity 0 instead of Note Off
+        // Velocity 0 is Note Off
         triggerNoteOff(midiNote);
       }
     }
@@ -109,7 +130,7 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
       const controller = data1;
       const value = data2;
 
-      // CC 64 is Damper / Sustain pedal
+      // CC 64 = Damper / Sustain pedal
       if (controller === 64) {
         handleSustainChange(value);
       }
@@ -145,7 +166,7 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
   useEffect(() => {
     if (!navigator.requestMIDIAccess) {
       setIsSupported(false);
-      setError('La Web MIDI API no está disponible en este navegador. Te recomendamos usar Google Chrome, Microsoft Edge, Brave u Opera.');
+      setError('Web MIDI API no soportada en este navegador. Te recomendamos Google Chrome, Edge, Brave u Opera.');
       return;
     }
 
@@ -165,7 +186,7 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
       })
       .catch((err) => {
         console.error('Error al solicitar acceso MIDI:', err);
-        setError('No se pudo acceder a los dispositivos MIDI. Asegúrate de conceder los permisos.');
+        setError('No se pudo acceder a los dispositivos MIDI.');
       });
 
     return () => {
@@ -199,19 +220,23 @@ export function useWebMidi({ playAudio = true, holdNotesWithSustain = true } = {
   ).sort((a, b) => a - b);
 
   return {
-    activeNotes,            // Notes physically held down
-    sustainedNotes,         // Notes held by sustain pedal
-    allAudibleNotes,        // Combined notes for display & harmony analysis
-    sustainPedal,           // Boolean sustain state
-    sustainValue,           // 0 - 127
-    inputs,                 // List of detected MIDI devices
-    selectedInputId,        // Currently chosen MIDI input or 'all'
+    activeNotes,
+    sustainedNotes,
+    allAudibleNotes,
+    sustainPedal,
+    sustainValue,
+    inputs,
+    selectedInputId,
     setSelectedInputId,
-    isSupported,            // Browser support flag
+    selectedChannel,        // Current channel: '1', 'all', '2'..'16'
+    setSelectedChannel,     // Function to switch channel
+    invertPedalPolarity,
+    setInvertPedalPolarity, // Function to invert pedal polarity
+    isSupported,
     error,
-    triggerNoteOn,          // Virtual play helper
-    triggerNoteOff,         // Virtual release helper
-    handleSustainChange,    // Virtual pedal toggle
+    triggerNoteOn,
+    triggerNoteOff,
+    handleSustainChange,
     clearAllNotes
   };
 }

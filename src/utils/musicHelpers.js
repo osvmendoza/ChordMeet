@@ -74,14 +74,17 @@ export const generateKeysInRange = (startMidi, endMidi) => {
 
   for (let midi = startMidi; midi <= endMidi; midi++) {
     const isBlack = isBlackKey(midi);
-    const noteNameWithOctave = Midi.midiToNoteName(midi, { pitchClass: true });
-    const noteNameOnly = noteNameWithOctave.replace(/\d+/, '');
+    // Midi.midiToNoteName(midi) gives "C1", "C2", "C3", "C4", "D#4", etc.
+    const noteNameWithOctave = Midi.midiToNoteName(midi);
     const octave = Math.floor(midi / 12) - 1;
+    const noteNameOnly = noteNameWithOctave.replace(/\d+/, '');
     const isC = noteNameOnly === 'C';
+    // Display C with its octave, e.g. "C1", "C2", "C3", "C4", "C5"...
+    const displayName = isC ? `C${octave}` : noteNameWithOctave;
 
     keys.push({
       midi,
-      name: noteNameWithOctave,
+      name: displayName,
       pitchClass: noteNameOnly,
       octave,
       isBlack,
@@ -99,8 +102,7 @@ export const generateKeysInRange = (startMidi, endMidi) => {
 
 // Convert MIDI number to VexFlow note spec
 export const midiToVexFlowSpec = (midiNumber, keySignature = 'C') => {
-  const noteName = Midi.midiToNoteName(midiNumber, { pitchClass: true });
-  // Tonal returns noteName like "C#4", "Db4", "G3"
+  const noteName = Midi.midiToNoteName(midiNumber);
   const parsed = Note.get(noteName);
   const letter = (parsed.letter || 'C').toLowerCase();
   const acc = parsed.acc || '';

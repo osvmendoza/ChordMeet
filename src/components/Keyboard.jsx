@@ -7,6 +7,7 @@ export default function Keyboard({
   keyCount = 61,              // 25, 49, 61, 76, 88
   keyHeight = null,           // Height in px or null for auto full-height
   labelMode = 'c-only',       // 'c-only', 'all', 'none'
+  scaleNotes = [],            // Array of pitch classes in active scale
   accentColor = '#38bdf8',    // Custom user color
   theme = null,               // Active theme object
   onNoteOn,                   // Callback (midi)
@@ -103,6 +104,7 @@ export default function Keyboard({
                 const isPressed = activeNotes.includes(k.midi);
                 const isSustained = !isPressed && sustainedNotes.includes(k.midi);
                 const isMiddleC = k.midi === 60; // C4
+                const inScale = scaleNotes.length > 0 && scaleNotes.includes(k.pitchClass);
 
                 // Should label be shown?
                 const showLabel = 
@@ -116,23 +118,40 @@ export default function Keyboard({
                     onPointerEnter={() => handleKeyPointerEnter(k.midi)}
                     onPointerUp={() => handleKeyPointerUpOrLeave(k.midi)}
                     onPointerLeave={() => handleKeyPointerUpOrLeave(k.midi)}
-                    className={`flex-1 h-full border-r ${whiteKeyBorder} rounded-b-md flex flex-col justify-end items-center pb-2 cursor-pointer transition-colors duration-75 relative white-key`}
+                    className={`flex-1 h-full border-r ${whiteKeyBorder} rounded-b-md flex flex-col justify-end items-center pb-2 cursor-pointer transition-all duration-75 relative white-key overflow-hidden`}
                     style={{
                       width: `${100 / totalWhiteKeys}%`,
-                      backgroundColor: isPressed 
-                        ? accentColor 
+                      background: isPressed 
+                        ? `linear-gradient(to bottom, ${hexToRgba(accentColor, 0.4)} 0%, ${hexToRgba(accentColor, 0.75)} 60%, ${accentColor} 100%)` 
                         : isSustained 
-                          ? hexToRgba(accentColor, 0.3) 
-                          : whiteKeyNormal,
+                          ? `linear-gradient(to bottom, #ffffff 0%, ${hexToRgba(accentColor, 0.3)} 65%, ${hexToRgba(accentColor, 0.45)} 100%)` 
+                          : `linear-gradient(to bottom, #ffffff 0%, ${whiteKeyNormal} 80%, #e2e8f0 100%)`,
                       boxShadow: isPressed 
-                        ? `${glowShadow}, inset 0 -4px 8px rgba(0,0,0,0.2)` 
+                        ? `0 0 16px ${hexToRgba(accentColor, 0.85)}, inset 0 0 12px ${hexToRgba(accentColor, 0.5)}, 0 4px 8px rgba(0,0,0,0.3)` 
                         : isSustained 
                           ? sustainedGlowShadow 
                           : undefined
                     }}
                   >
+                    {/* Glowing Top Activation Strip on Pressed White Key */}
+                    {isPressed && (
+                      <div 
+                        className="absolute top-0 left-0 right-0 h-1.5 z-10 animate-pulse"
+                        style={{ backgroundColor: accentColor, boxShadow: `0 0 8px ${accentColor}` }}
+                      />
+                    )}
+
+                    {/* Scale Guide Marker Dot */}
+                    {inScale && !isPressed && (
+                      <div 
+                        className="w-1.5 h-1.5 rounded-full mb-1 opacity-60"
+                        style={{ backgroundColor: accentColor }}
+                        title={`Nota de escala: ${k.pitchClass}`}
+                      />
+                    )}
+
                     {/* Middle C Dot Indicator */}
-                    {isMiddleC && (
+                    {isMiddleC && !inScale && (
                       <div 
                         className="w-1.5 h-1.5 rounded-full mb-1"
                         style={{ backgroundColor: isPressed ? '#ffffff' : '#64748b' }}
@@ -145,9 +164,9 @@ export default function Keyboard({
                       <span 
                         className={`text-[10px] sm:text-xs font-mono font-bold tracking-tight select-none transition-colors ${
                           isPressed
-                            ? whiteKeyTextActive
+                            ? 'text-slate-950 font-black scale-110 drop-shadow-sm'
                             : k.isC
-                              ? 'text-indigo-500 font-extrabold'
+                              ? 'text-indigo-600 font-extrabold'
                               : whiteKeyText
                         }`}
                       >

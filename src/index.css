@@ -10,8 +10,8 @@
 
 /* Custom scrollbar for piano view */
 ::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
+  height: 6px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
   background: #0f172a;
@@ -26,7 +26,6 @@
 
 /* 3D styling for Piano Keys */
 .white-key {
-  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 85%, #e2e8f0 100%);
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -2px 0 rgba(0, 0, 0, 0.2),
@@ -43,7 +42,6 @@
 }
 
 .black-key {
-  background: linear-gradient(to bottom, #334155 0%, #0f172a 75%, #020617 100%);
   box-shadow: 
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -3px 0 rgba(0, 0, 0, 0.8),

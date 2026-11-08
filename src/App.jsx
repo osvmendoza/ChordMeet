@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HeaderControls from './components/HeaderControls';
 import QuadrantContainer from './components/QuadrantContainer';
-import ChordDisplay from './components/ChordDisplay';
+import ChordDisplay, { formatChordSymbol } from './components/ChordDisplay';
 import Staff from './components/Staff';
 import Keyboard from './components/Keyboard';
 import SustainPedal from './components/SustainPedal';
 import ChordHistory from './components/ChordHistory';
 import Metronome from './components/Metronome';
+import MidiRecorder from './components/MidiRecorder';
 
 import { useWebMidi } from './hooks/useWebMidi';
 import { synth } from './utils/audioSynth';
@@ -88,6 +89,10 @@ export default function App() {
     inputs,
     selectedInputId,
     setSelectedInputId,
+    selectedChannel,
+    setSelectedChannel,
+    invertPedalPolarity,
+    setInvertPedalPolarity,
     isSupported,
     triggerNoteOn,
     triggerNoteOff,
@@ -101,10 +106,11 @@ export default function App() {
   // Track chord history
   useEffect(() => {
     if (allAudibleNotes.length >= 2) {
-      const noteNames = allAudibleNotes.map((m) => Midi.midiToNoteName(m, { pitchClass: true }));
-      const detected = Chord.detect(noteNames);
+      const noteNames = allAudibleNotes.map((m) => Midi.midiToNoteName(m));
+      const pitchClasses = noteNames.map((n) => n.replace(/\d+/, ''));
+      const detected = Chord.detect(Array.from(new Set(pitchClasses)));
       if (detected.length > 0) {
-        const chordName = detected[0];
+        const chordName = formatChordSymbol(detected[0]);
         setChordHistory((prev) => {
           if (prev.length > 0 && prev[prev.length - 1].chord === chordName) {
             return prev;
@@ -301,6 +307,9 @@ export default function App() {
                 isPressed={sustainPedal}
                 value={sustainValue}
                 onToggle={handleSustainChange}
+                selectedChannel={selectedChannel}
+                invertPolarity={invertPedalPolarity}
+                onTogglePolarity={() => setInvertPedalPolarity(!invertPedalPolarity)}
                 accentColor={accentColor}
                 theme={activeTheme}
               />
@@ -353,6 +362,19 @@ export default function App() {
           </div>
         );
 
+      case 'recorder':
+        return (
+          <div className="w-full h-full p-2 overflow-auto">
+            <MidiRecorder
+              activeNotes={activeNotes}
+              onTriggerNoteOn={triggerNoteOn}
+              onTriggerNoteOff={triggerNoteOff}
+              accentColor={accentColor}
+              theme={activeTheme}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -392,6 +414,8 @@ export default function App() {
           inputs={inputs}
           selectedInputId={selectedInputId}
           onSelectInput={setSelectedInputId}
+          selectedChannel={selectedChannel}
+          onSelectChannel={setSelectedChannel}
           keyCount={keyCount}
           onChangeKeyCount={setKeyCount}
           accentColor={accentColor}

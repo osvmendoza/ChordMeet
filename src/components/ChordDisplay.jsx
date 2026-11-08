@@ -2,6 +2,14 @@ import React, { useMemo } from 'react';
 import { Chord, Midi, Note } from '@tonaljs/tonal';
 import { Music2, Layers, Sparkles } from 'lucide-react';
 
+// Format chord symbols: Eliminate "M" for major triads (e.g. "EM" -> "E", "CM" -> "C", "F#M" -> "F#")
+export const formatChordSymbol = (chordStr) => {
+  if (!chordStr) return '';
+  const parts = chordStr.split(' / ');
+  const cleanMain = parts[0].replace(/^([A-G][b#]?)M$/, '$1');
+  return parts.length > 1 ? `${cleanMain} / ${parts[1]}` : cleanMain;
+};
+
 export default function ChordDisplay({ 
   activeNotes = [], 
   accentColor = '#38bdf8',
@@ -26,9 +34,9 @@ export default function ChordDisplay({
       };
     }
 
-    // Convert MIDI numbers to note names with octave (e.g. ["C4", "E4", "G4"])
+    // Convert MIDI numbers to note names with full octave (e.g. ["C4", "E4", "G4"])
     const noteNamesWithOctave = activeNotes.map((midi) =>
-      Midi.midiToNoteName(midi, { pitchClass: true })
+      Midi.midiToNoteName(midi)
     );
 
     // Note pitch classes without octave (e.g. ["C", "E", "G"])
@@ -38,19 +46,20 @@ export default function ChordDisplay({
 
     const uniquePitchClasses = Array.from(new Set(pitchClasses));
     const lowestMidi = activeNotes[0];
-    const bassNoteName = Midi.midiToNoteName(lowestMidi, { pitchClass: true });
+    const bassNoteName = Midi.midiToNoteName(lowestMidi);
     const bassPitchClass = Note.pitchClass(bassNoteName);
 
     // Single note played
     if (activeNotes.length === 1) {
-      const noteName = noteNamesWithOctave[0];
+      const noteName = noteNamesWithOctave[0]; // e.g. "D4"
       const parsed = Note.get(noteName);
+      const oct = parsed.oct !== undefined ? parsed.oct : (Math.floor(activeNotes[0] / 12) - 1);
       return {
         type: 'single-note',
         chordName: noteName,
-        noteDetail: `${parsed.letter}${parsed.acc || ''} en octava ${parsed.oct}`,
-        notes: noteNamesWithOctave,
-        bassNote: bassNoteName,
+        noteDetail: `Nota ${parsed.letter}${parsed.acc || ''} • Octava ${oct}`,
+        notes: [noteName],
+        bassNote: noteName,
         intervals: ['Tónica'],
         alternatives: []
       };
@@ -58,24 +67,25 @@ export default function ChordDisplay({
 
     // Detect chords with Tonal
     const detectedChords = Chord.detect(uniquePitchClasses);
-    let primaryChord = detectedChords[0] || null;
+    let rawPrimaryChord = detectedChords[0] || null;
     let alternatives = detectedChords.slice(1);
 
-    if (primaryChord) {
-      const chordInfo = Chord.get(primaryChord);
+    if (rawPrimaryChord) {
+      const chordInfo = Chord.get(rawPrimaryChord);
       // If bass note is not the root of the detected chord, format as slash chord
+      let formattedPrimary = formatChordSymbol(rawPrimaryChord);
       if (chordInfo.tonic && chordInfo.tonic !== bassPitchClass) {
-        primaryChord = `${primaryChord} / ${bassPitchClass}`;
+        formattedPrimary = `${formattedPrimary} / ${bassPitchClass}`;
       }
 
       return {
         type: 'chord',
-        chordName: primaryChord,
-        rawChord: detectedChords[0],
+        chordName: formattedPrimary,
+        rawChord: rawPrimaryChord,
         notes: noteNamesWithOctave,
         bassNote: bassPitchClass,
         intervals: chordInfo.intervals || [],
-        alternatives: alternatives.slice(0, 3)
+        alternatives: alternatives.slice(0, 3).map(formatChordSymbol)
       };
     }
 

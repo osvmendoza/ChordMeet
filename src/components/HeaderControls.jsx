@@ -18,6 +18,8 @@ export default function HeaderControls({
   inputs = [],
   selectedInputId = 'all',
   onSelectInput,
+  selectedChannel = '1',
+  onSelectChannel,
   
   // Keyboard configurations
   keyCount = 61,
@@ -81,6 +83,25 @@ export default function HeaderControls({
                 Virtual MIDI
               </span>
             )}
+          </div>
+
+          {/* MIDI Channel Filter (Channel 1, All, etc.) */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <span className="opacity-60 text-[11px]">Canal:</span>
+            <select
+              value={selectedChannel}
+              onChange={(e) => onSelectChannel && onSelectChannel(e.target.value)}
+              className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer text-sky-400"
+              title="Filtro de canal MIDI (para evitar interferencias en el pedal de sustain)"
+            >
+              <option value="1" className="bg-slate-900 text-slate-100">Canal 1 (Recomendado)</option>
+              <option value="all" className="bg-slate-900 text-slate-100">Todos (Omni)</option>
+              {Array.from({ length: 15 }, (_, i) => i + 2).map((ch) => (
+                <option key={ch} value={String(ch)} className="bg-slate-900 text-slate-100">
+                  Canal {ch}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Virtual Audio Sound Toggle */}
