@@ -6,6 +6,7 @@ export default function Keyboard({
   sustainedNotes = [],        // Notes sustained by pedal
   sustainedNoteDurations = {},// Individual remaining seconds for each sustained note
   sustainDecayTime = 4.0,     // Configured decay time
+  keySignature = 'C',         // Active key signature
   keyCount = 61,              // 25, 49, 61, 76, 88
   keyHeight = null,           // Height in px or null for auto full-height
   labelMode = 'c-only',       // 'c-only', 'all', 'none'
@@ -26,10 +27,10 @@ export default function Keyboard({
   const whiteKeyText = theme?.whiteKeyText || 'text-slate-500';
   const whiteKeyTextActive = theme?.whiteKeyTextActive || 'text-slate-950 font-black';
 
-  // Generate key list and layout calculations based on keyCount
+  // Generate key list and layout calculations based on keyCount and keySignature
   const { whiteKeys, blackKeys, totalWhiteKeys } = useMemo(() => {
     const config = KEYBOARD_CONFIGS[keyCount] || KEYBOARD_CONFIGS[61];
-    const { keys, totalWhiteKeys } = generateKeysInRange(config.startMidi, config.endMidi);
+    const { keys, totalWhiteKeys } = generateKeysInRange(config.startMidi, config.endMidi, keySignature);
 
     const whites = [];
     const blacks = [];
@@ -43,7 +44,7 @@ export default function Keyboard({
     });
 
     return { whiteKeys: whites, blackKeys: blacks, totalWhiteKeys };
-  }, [keyCount]);
+  }, [keyCount, keySignature]);
 
   // Handle pointer interactions (mouse & touch drag)
   const handleKeyPointerDown = (midi, e) => {
@@ -205,6 +206,7 @@ export default function Keyboard({
               const blackWidthPct = whiteKeyPct * 0.65; // ~65% width of white key
               const leftPct = (precedingIndex + 1) * whiteKeyPct - (blackWidthPct / 2);
 
+              const inScale = scaleNotes.length > 0 && scaleNotes.includes(k.pitchClass);
               const noteDuration = sustainedNoteDurations[k.midi] || sustainDecayTime || 4.0;
 
               return (
@@ -242,6 +244,15 @@ export default function Keyboard({
                           ? `sustainFadeOut ${noteDuration}s cubic-bezier(0.25, 1, 0.5, 1) forwards` 
                           : undefined
                       }}
+                    />
+                  )}
+
+                  {/* Scale Guide Marker Dot for Black Keys */}
+                  {inScale && !isPressed && !isSustained && (
+                    <div 
+                      className="w-1.5 h-1.5 rounded-full mb-1 opacity-70 z-10"
+                      style={{ backgroundColor: accentColor }}
+                      title={`Nota de escala: ${k.pitchClass}`}
                     />
                   )}
 

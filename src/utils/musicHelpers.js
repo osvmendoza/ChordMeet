@@ -1,4 +1,4 @@
-import { Midi, Note } from '@tonaljs/tonal';
+import { Midi, Note, Key } from '@tonaljs/tonal';
 
 // Key presets configuration
 export const KEYBOARD_CONFIGS = {
@@ -50,6 +50,74 @@ export const KEY_SIGNATURES = [
   { id: 'Db', name: 'Db Maj / Bb min', label: 'Db (5b)' }
 ];
 
+// Key classifications
+export const SHARP_KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#'];
+export const FLAT_KEYS = ['F', 'Bb', 'Eb', 'Ab', 'Db'];
+
+export const isSharpKey = (keySignature = 'C') => {
+  return SHARP_KEYS.includes(keySignature);
+};
+
+// Pitch class sets
+const SHARP_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLAT_NOTE_NAMES  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+// Map MIDI number to harmonic note name adhering to active key signature
+export const midiToHarmonicNoteName = (midiNumber, keySignature = 'C') => {
+  const noteInOctave = ((midiNumber % 12) + 12) % 12;
+  const octave = Math.floor(midiNumber / 12) - 1;
+  const isSharp = isSharpKey(keySignature);
+  const pitchMap = isSharp ? SHARP_NOTE_NAMES : FLAT_NOTE_NAMES;
+  let pitchClass = pitchMap[noteInOctave];
+  if (keySignature === 'F#' && noteInOctave === 5) {
+    pitchClass = 'E#';
+  }
+  return `${pitchClass}${octave}`;
+};
+
+// Enharmonic mapping tables for chord symbols
+const ENHARMONIC_FLAT_TO_SHARP = {
+  'Db': 'C#',
+  'Eb': 'D#',
+  'Gb': 'F#',
+  'Ab': 'G#',
+  'Bb': 'A#'
+};
+
+const ENHARMONIC_SHARP_TO_FLAT = {
+  'C#': 'Db',
+  'D#': 'Eb',
+  'F#': 'Gb',
+  'G#': 'Ab',
+  'A#': 'Bb'
+};
+
+// Harmonize chord symbol roots and slash bass notes to match key signature
+export const harmonizeChordSymbol = (chordStr, keySignature = 'C') => {
+  if (!chordStr) return '';
+  const isSharp = isSharpKey(keySignature);
+  const map = isSharp ? ENHARMONIC_FLAT_TO_SHARP : ENHARMONIC_SHARP_TO_FLAT;
+
+  return chordStr.replace(/^([A-G][b#]?)(.*?)(\s*\/\s*([A-G][b#]?))?$/, (match, root, quality, slashPart, bass) => {
+    const harmonizedRoot = map[root] || root;
+    const harmonizedBass = bass ? (map[bass] || bass) : '';
+    return slashPart ? `${harmonizedRoot}${quality} / ${harmonizedBass}` : `${harmonizedRoot}${quality}`;
+  });
+};
+
+// Get array of pitch classes in the scale of the active key signature
+export const getScaleNotes = (keySignature = 'C') => {
+  try {
+    const major = Key.majorKey(keySignature);
+    if (major && major.scale && major.scale.length > 0) {
+      return major.scale;
+    }
+  } catch (e) {
+    // fallback
+  }
+  return ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+};
+
 // Color presets for active keys
 export const COLOR_PRESETS = [
   { name: 'Azul Neón', value: '#38bdf8', glow: 'rgba(56, 189, 248, 0.6)' },
@@ -62,24 +130,22 @@ export const COLOR_PRESETS = [
 
 // Determine if a MIDI note is black or white
 export const isBlackKey = (midiNumber) => {
-  const noteInOctave = midiNumber % 12;
-  // 1=C#, 3=D#, 6=F#, 8=G#, 10=A#
+  const noteInOctave = ((midiNumber % 12) + 12) % 12;
+  // 1=C#/Db, 3=D#/Eb, 6=F#/Gb, 8=G#/Ab, 10=A#/Bb
   return [1, 3, 6, 8, 10].includes(noteInOctave);
 };
 
-// Generate list of all keys in a range
-export const generateKeysInRange = (startMidi, endMidi) => {
+// Generate list of all keys in a range adapted to the active key signature
+export const generateKeysInRange = (startMidi, endMidi, keySignature = 'C') => {
   const keys = [];
   let whiteKeyIndex = 0;
 
   for (let midi = startMidi; midi <= endMidi; midi++) {
     const isBlack = isBlackKey(midi);
-    // Midi.midiToNoteName(midi) gives "C1", "C2", "C3", "C4", "D#4", etc.
-    const noteNameWithOctave = Midi.midiToNoteName(midi);
+    const noteNameWithOctave = midiToHarmonicNoteName(midi, keySignature);
     const octave = Math.floor(midi / 12) - 1;
     const noteNameOnly = noteNameWithOctave.replace(/\d+/, '');
     const isC = noteNameOnly === 'C';
-    // Display C with its octave, e.g. "C1", "C2", "C3", "C4", "C5"...
     const displayName = isC ? `C${octave}` : noteNameWithOctave;
 
     keys.push({
@@ -100,9 +166,9 @@ export const generateKeysInRange = (startMidi, endMidi) => {
   return { keys, totalWhiteKeys: whiteKeyIndex };
 };
 
-// Convert MIDI number to VexFlow note spec
+// Convert MIDI number to VexFlow note spec adhering to key signature
 export const midiToVexFlowSpec = (midiNumber, keySignature = 'C') => {
-  const noteName = Midi.midiToNoteName(midiNumber);
+  const noteName = midiToHarmonicNoteName(midiNumber, keySignature);
   const parsed = Note.get(noteName);
   const letter = (parsed.letter || 'C').toLowerCase();
   const acc = parsed.acc || '';

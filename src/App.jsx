@@ -12,6 +12,7 @@ import MidiRecorder from './components/MidiRecorder';
 import { useWebMidi } from './hooks/useWebMidi';
 import { synth } from './utils/audioSynth';
 import { THEMES } from './utils/themeConfig';
+import { midiToHarmonicNoteName, harmonizeChordSymbol, getScaleNotes } from './utils/musicHelpers';
 import { Chord, Midi } from '@tonaljs/tonal';
 import { Eye, GripVertical, GripHorizontal } from 'lucide-react';
 
@@ -109,11 +110,12 @@ export default function App() {
   // Track chord history
   useEffect(() => {
     if (allAudibleNotes.length >= 2) {
-      const noteNames = allAudibleNotes.map((m) => Midi.midiToNoteName(m));
+      const noteNames = allAudibleNotes.map((m) => midiToHarmonicNoteName(m, keySignature));
       const pitchClasses = noteNames.map((n) => n.replace(/\d+/, ''));
       const detected = Chord.detect(Array.from(new Set(pitchClasses)));
       if (detected.length > 0) {
-        const chordName = formatChordSymbol(detected[0]);
+        let chordName = formatChordSymbol(detected[0]);
+        chordName = harmonizeChordSymbol(chordName, keySignature);
         setChordHistory((prev) => {
           if (prev.length > 0 && prev[prev.length - 1].chord === chordName) {
             return prev;
@@ -123,7 +125,7 @@ export default function App() {
         });
       }
     }
-  }, [allAudibleNotes]);
+  }, [allAudibleNotes, keySignature]);
 
   // Keyboard shortcut: Toggle Navbar with 'H'
   useEffect(() => {
@@ -298,6 +300,8 @@ export default function App() {
                 sustainedNotes={sustainedNotes}
                 sustainedNoteDurations={sustainedNoteDurations}
                 sustainDecayTime={sustainDecayTime}
+                keySignature={keySignature}
+                scaleNotes={getScaleNotes(keySignature)}
                 keyCount={keyCount}
                 labelMode={labelMode}
                 accentColor={accentColor}
@@ -344,6 +348,7 @@ export default function App() {
           <div className="w-full h-full p-1.5 overflow-auto">
             <ChordDisplay
               activeNotes={allAudibleNotes}
+              keySignature={keySignature}
               accentColor={accentColor}
               theme={activeTheme}
             />

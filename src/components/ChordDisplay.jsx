@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { Chord, Midi, Note } from '@tonaljs/tonal';
+import { Chord, Note } from '@tonaljs/tonal';
 import { Music2, Layers, Sparkles } from 'lucide-react';
+import { midiToHarmonicNoteName, harmonizeChordSymbol, KEY_SIGNATURES } from '../utils/musicHelpers';
 
 // Format chord symbols: Eliminate "M" for major triads (e.g. "EM" -> "E", "CM" -> "C", "F#M" -> "F#")
 export const formatChordSymbol = (chordStr) => {
@@ -12,6 +13,7 @@ export const formatChordSymbol = (chordStr) => {
 
 export default function ChordDisplay({ 
   activeNotes = [], 
+  keySignature = 'C',
   accentColor = '#38bdf8',
   theme = null
 }) {
@@ -21,7 +23,12 @@ export default function ChordDisplay({
   const badgeBg = theme?.badgeBg || 'bg-slate-800 text-slate-200 border-slate-700';
   const isLight = theme?.mode === 'light';
 
-  // Analyze notes using Tonal.js
+  const currentKeyInfo = KEY_SIGNATURES.find((k) => k.id === keySignature) || {
+    id: keySignature,
+    label: `${keySignature} Maj`
+  };
+
+  // Analyze notes using Tonal.js with harmonic context of keySignature
   const analysis = useMemo(() => {
     if (!activeNotes || activeNotes.length === 0) {
       return {
@@ -34,24 +41,24 @@ export default function ChordDisplay({
       };
     }
 
-    // Convert MIDI numbers to note names with full octave (e.g. ["C4", "E4", "G4"])
+    // Convert MIDI numbers to note names with full octave using keySignature enharmonics
     const noteNamesWithOctave = activeNotes.map((midi) =>
-      Midi.midiToNoteName(midi)
+      midiToHarmonicNoteName(midi, keySignature)
     );
 
-    // Note pitch classes without octave (e.g. ["C", "E", "G"])
+    // Note pitch classes without octave (e.g. ["C#", "F", "G#", "B"])
     const pitchClasses = noteNamesWithOctave.map((name) =>
-      Note.pitchClass(name)
+      name.replace(/\d+/, '')
     );
 
     const uniquePitchClasses = Array.from(new Set(pitchClasses));
     const lowestMidi = activeNotes[0];
-    const bassNoteName = Midi.midiToNoteName(lowestMidi);
-    const bassPitchClass = Note.pitchClass(bassNoteName);
+    const bassNoteName = midiToHarmonicNoteName(lowestMidi, keySignature);
+    const bassPitchClass = bassNoteName.replace(/\d+/, '');
 
     // Single note played
     if (activeNotes.length === 1) {
-      const noteName = noteNamesWithOctave[0]; // e.g. "D4"
+      const noteName = noteNamesWithOctave[0]; // e.g. "C#3"
       const parsed = Note.get(noteName);
       const oct = parsed.oct !== undefined ? parsed.oct : (Math.floor(activeNotes[0] / 12) - 1);
       return {
@@ -72,9 +79,12 @@ export default function ChordDisplay({
 
     if (rawPrimaryChord) {
       const chordInfo = Chord.get(rawPrimaryChord);
-      // If bass note is not the root of the detected chord, format as slash chord
       let formattedPrimary = formatChordSymbol(rawPrimaryChord);
-      if (chordInfo.tonic && chordInfo.tonic !== bassPitchClass) {
+      formattedPrimary = harmonizeChordSymbol(formattedPrimary, keySignature);
+
+      // Check if bass note is not the root of the detected chord
+      const harmonizedTonic = chordInfo.tonic ? harmonizeChordSymbol(chordInfo.tonic, keySignature) : null;
+      if (harmonizedTonic && harmonizedTonic !== bassPitchClass) {
         formattedPrimary = `${formattedPrimary} / ${bassPitchClass}`;
       }
 
@@ -85,7 +95,7 @@ export default function ChordDisplay({
         notes: noteNamesWithOctave,
         bassNote: bassPitchClass,
         intervals: chordInfo.intervals || [],
-        alternatives: alternatives.slice(0, 3).map(formatChordSymbol)
+        alternatives: alternatives.slice(0, 3).map((a) => harmonizeChordSymbol(formatChordSymbol(a), keySignature))
       };
     }
 
@@ -129,7 +139,7 @@ export default function ChordDisplay({
       intervals: [],
       alternatives: []
     };
-  }, [activeNotes]);
+  }, [activeNotes, keySignature]);
 
   return (
     <div className={`flex flex-col h-full rounded-2xl border p-5 transition-all duration-300 ${cardBg}`}>
@@ -144,12 +154,17 @@ export default function ChordDisplay({
             Detector Armónico
           </h2>
         </div>
-        <span 
-          className="text-xs font-mono px-2 py-0.5 rounded-md border"
-          style={{ borderColor: `${accentColor}40`, color: accentColor }}
-        >
-          {activeNotes.length} {activeNotes.length === 1 ? 'nota activa' : 'notas activas'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono opacity-60 bg-black/20 px-2 py-0.5 rounded border border-white/5">
+            Tonalidad: {currentKeyInfo.label}
+          </span>
+          <span 
+            className="text-xs font-mono px-2 py-0.5 rounded-md border"
+            style={{ borderColor: `${accentColor}40`, color: accentColor }}
+          >
+            {activeNotes.length} {activeNotes.length === 1 ? 'nota activa' : 'notas activas'}
+          </span>
+        </div>
       </div>
 
       {/* Main Content Area */}

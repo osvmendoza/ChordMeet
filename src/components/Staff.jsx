@@ -108,13 +108,6 @@ export default function Staff({
         clef
       });
 
-      // Add accidentals if any
-      specs.forEach((s, idx) => {
-        if (s.acc) {
-          note.addModifier(new Accidental(s.acc), idx);
-        }
-      });
-
       // Highlight active played notes
       note.setStyle({
         fillStyle: accentColor,
@@ -136,6 +129,11 @@ export default function Staff({
       const voiceBass = new Voice({ num_beats: 4, beat_value: 4 });
       voiceBass.setStrict(false);
       voiceBass.addTickables([bassNote]);
+
+      // Standard VexFlow harmonic accidental application adhering to key signature
+      // (Suppresses accidentals already in key signature, adds naturals/sharps/flats when needed)
+      Accidental.applyAccidentals([voiceTreble], keySignature);
+      Accidental.applyAccidentals([voiceBass], keySignature);
 
       // Format and align notes horizontally
       const startX = Math.max(staveTreble.getNoteStartX(), staveBass.getNoteStartX()) + 15;
