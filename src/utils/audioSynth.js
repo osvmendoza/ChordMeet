@@ -42,8 +42,8 @@ class PianoSynth {
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
-  // Play a note (velocity: 0.0 - 1.0)
-  noteOn(midi, velocity = 0.8) {
+  // Play a note (velocity: 0.0 - 1.0, decayTime in seconds)
+  noteOn(midi, velocity = 0.8, decayTime = null) {
     if (!this.enabled) return;
     this.init();
     if (!this.audioCtx) return;
@@ -64,14 +64,19 @@ class PianoSynth {
     osc2.type = 'sine';
     osc2.frequency.setValueAtTime(freq, now);
 
-    // Voice gain envelope (Attack - Decay)
+    // Voice gain envelope (Attack - Acoustic Natural Piano Decay)
     const voiceGain = this.audioCtx.createGain();
     const velFactor = Math.max(0.1, velocity);
     voiceGain.gain.setValueAtTime(0, now);
-    // Instant attack
+    // Instant hammer attack
     voiceGain.gain.linearRampToValueAtTime(velFactor * 0.4, now + 0.008);
-    // Gentle natural piano decay
-    voiceGain.gain.exponentialRampToValueAtTime(velFactor * 0.15, now + 0.6);
+    // Initial drop to warm resonance
+    voiceGain.gain.exponentialRampToValueAtTime(velFactor * 0.18, now + 0.4);
+
+    // Natural acoustic ring decay over decayTime while pedal is held
+    if (decayTime && decayTime < 999) {
+      voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + Math.max(0.8, decayTime));
+    }
 
     // Filter for acoustic warm damping
     const filter = this.audioCtx.createBiquadFilter();
@@ -89,17 +94,17 @@ class PianoSynth {
     this.activeVoices.set(midi, { osc1, osc2, voiceGain, startTime: now });
   }
 
-  // Release a note
+  // Release a note (Damper drops onto string)
   noteOff(midi) {
     if (!this.activeVoices.has(midi) || !this.audioCtx) return;
 
     const { osc1, osc2, voiceGain } = this.activeVoices.get(midi);
     const now = this.audioCtx.currentTime;
 
-    // Smooth release to avoid clicking
+    // Immediate damper drop: smooth 80ms cutoff avoids clicking
     voiceGain.gain.cancelScheduledValues(now);
-    voiceGain.gain.setValueAtTime(voiceGain.gain.value, now);
-    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    voiceGain.gain.setValueAtTime(Math.max(0.0001, voiceGain.gain.value), now);
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
 
     setTimeout(() => {
       try {
@@ -111,7 +116,7 @@ class PianoSynth {
       } catch (e) {
         // Voice might already be stopped
       }
-    }, 180);
+    }, 100);
 
     this.activeVoices.delete(midi);
   }

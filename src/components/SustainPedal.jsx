@@ -7,6 +7,8 @@ export default function SustainPedal({
   invertPolarity = false,
   onTogglePolarity = null,
   selectedChannel = '1',
+  sustainDecayTime = 4.0,
+  onChangeDecayTime = null,
   accentColor = '#38bdf8',
   theme = null
 }) {
@@ -48,8 +50,8 @@ export default function SustainPedal({
       </div>
 
       {/* Info labels and CC status */}
-      <div className="flex flex-col gap-0.5">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center gap-2 flex-wrap">
           <span 
             className={`w-2 h-2 rounded-full transition-colors ${
               isPressed ? 'animate-ping' : 'opacity-40'
@@ -77,6 +79,28 @@ export default function SustainPedal({
           <span className={`text-[11px] font-mono ${subText}`}>
             Valor: {value}
           </span>
+
+          {/* User Configurable Acoustic Piano Decay Time */}
+          {onChangeDecayTime && (
+            <div className="flex items-center gap-1 bg-black/25 px-1.5 py-0.5 rounded border border-white/5 text-[10px] font-mono">
+              <span className="opacity-70">Decaimiento:</span>
+              <select
+                value={sustainDecayTime}
+                onChange={(e) => onChangeDecayTime(parseFloat(e.target.value))}
+                className="bg-transparent font-bold focus:outline-none cursor-pointer text-amber-400"
+                title="Simula la resonancia acústica real: la nota decae gradualmente con el pedal presionado en orden de pulsación. Al soltar el pedal, todas las notas se apagan al instante."
+              >
+                <option value="2" className="bg-slate-900 text-slate-100">2.0s (Rápido)</option>
+                <option value="3.5" className="bg-slate-900 text-slate-100">3.5s (Vertical)</option>
+                <option value="4" className="bg-slate-900 text-slate-100">4.0s (Estándar)</option>
+                <option value="5" className="bg-slate-900 text-slate-100">5.0s (Piano de Cola)</option>
+                <option value="8" className="bg-slate-900 text-slate-100">8.0s (Concierto)</option>
+                <option value="12" className="bg-slate-900 text-slate-100">12.0s (Largo)</option>
+                <option value="999" className="bg-slate-900 text-slate-100">Infinito (Hasta soltar pedal)</option>
+              </select>
+            </div>
+          )}
+
           {onTogglePolarity && (
             <button
               onClick={onTogglePolarity}

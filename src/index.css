@@ -31,7 +31,7 @@
     inset 0 -2px 0 rgba(0, 0, 0, 0.2),
     0 4px 6px -1px rgba(0, 0, 0, 0.3),
     0 2px 4px -2px rgba(0, 0, 0, 0.3);
-  transition: transform 0.05s ease-out, background 0.05s ease-out, box-shadow 0.05s ease-out;
+  transition: transform 0.05s ease-out, background 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
 .white-key:active {
@@ -46,7 +46,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -3px 0 rgba(0, 0, 0, 0.8),
     0 6px 10px rgba(0, 0, 0, 0.7);
-  transition: transform 0.05s ease-out, background 0.05s ease-out, box-shadow 0.05s ease-out;
+  transition: transform 0.05s ease-out, background 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
 .black-key:active {
@@ -61,4 +61,24 @@
   overflow: visible;
   max-width: 100%;
   height: auto;
+}
+
+/* Acoustic Piano Sustain Natural Decay Animation */
+@keyframes sustainFadeOut {
+  0% {
+    opacity: 0.95;
+    filter: brightness(1);
+  }
+  30% {
+    opacity: 0.65;
+    filter: brightness(0.95);
+  }
+  70% {
+    opacity: 0.3;
+    filter: brightness(0.85);
+  }
+  100% {
+    opacity: 0;
+    filter: brightness(0.7);
+  }
 }

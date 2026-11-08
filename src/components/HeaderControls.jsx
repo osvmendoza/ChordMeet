@@ -20,6 +20,8 @@ export default function HeaderControls({
   onSelectInput,
   selectedChannel = '1',
   onSelectChannel,
+  sustainDecayTime = 1.5,
+  onChangeDecayTime,
   
   // Keyboard configurations
   keyCount = 61,
@@ -101,6 +103,25 @@ export default function HeaderControls({
                   Canal {ch}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* Natural Acoustic Piano Decay Time Selector */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <span className="opacity-60 text-[11px]">Decaimiento:</span>
+            <select
+              value={sustainDecayTime}
+              onChange={(e) => onChangeDecayTime && onChangeDecayTime(parseFloat(e.target.value))}
+              className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer text-amber-400"
+              title="Simula la resonancia acústica real: la nota decae gradualmente con el pedal presionado en orden de pulsación. Al soltar el pedal, todas las notas se apagan al instante."
+            >
+              <option value="2" className="bg-slate-900 text-slate-100">2.0s (Rápido)</option>
+              <option value="3.5" className="bg-slate-900 text-slate-100">3.5s (Vertical)</option>
+              <option value="4" className="bg-slate-900 text-slate-100">4.0s (Estándar)</option>
+              <option value="5" className="bg-slate-900 text-slate-100">5.0s (Cola)</option>
+              <option value="8" className="bg-slate-900 text-slate-100">8.0s (Concierto)</option>
+              <option value="12" className="bg-slate-900 text-slate-100">12.0s (Largo)</option>
+              <option value="999" className="bg-slate-900 text-slate-100">Infinito</option>
             </select>
           </div>
 

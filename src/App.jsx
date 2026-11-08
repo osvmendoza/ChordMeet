@@ -83,6 +83,7 @@ export default function App() {
   const {
     activeNotes,
     sustainedNotes,
+    sustainedNoteDurations,
     allAudibleNotes,
     sustainPedal,
     sustainValue,
@@ -91,6 +92,8 @@ export default function App() {
     setSelectedInputId,
     selectedChannel,
     setSelectedChannel,
+    sustainDecayTime,
+    setSustainDecayTime,
     invertPedalPolarity,
     setInvertPedalPolarity,
     isSupported,
@@ -293,6 +296,8 @@ export default function App() {
               <Keyboard
                 activeNotes={activeNotes}
                 sustainedNotes={sustainedNotes}
+                sustainedNoteDurations={sustainedNoteDurations}
+                sustainDecayTime={sustainDecayTime}
                 keyCount={keyCount}
                 labelMode={labelMode}
                 accentColor={accentColor}
@@ -308,6 +313,8 @@ export default function App() {
                 value={sustainValue}
                 onToggle={handleSustainChange}
                 selectedChannel={selectedChannel}
+                sustainDecayTime={sustainDecayTime}
+                onChangeDecayTime={setSustainDecayTime}
                 invertPolarity={invertPedalPolarity}
                 onTogglePolarity={() => setInvertPedalPolarity(!invertPedalPolarity)}
                 accentColor={accentColor}
@@ -416,6 +423,8 @@ export default function App() {
           onSelectInput={setSelectedInputId}
           selectedChannel={selectedChannel}
           onSelectChannel={setSelectedChannel}
+          sustainDecayTime={sustainDecayTime}
+          onChangeDecayTime={setSustainDecayTime}
           keyCount={keyCount}
           onChangeKeyCount={setKeyCount}
           accentColor={accentColor}
