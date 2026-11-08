@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  }
+}
+
+/* Custom scrollbar for piano view */
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* 3D styling for Piano Keys */
+.white-key {
+  background: linear-gradient(to bottom, #ffffff 0%, #f8fafc 85%, #e2e8f0 100%);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.05s ease-out, background 0.05s ease-out, box-shadow 0.05s ease-out;
+}
+
+.white-key:active {
+  transform: translateY(2px);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.black-key {
+  background: linear-gradient(to bottom, #334155 0%, #0f172a 75%, #020617 100%);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.8),
+    0 6px 10px rgba(0, 0, 0, 0.7);
+  transition: transform 0.05s ease-out, background 0.05s ease-out, box-shadow 0.05s ease-out;
+}
+
+.black-key:active {
+  transform: translateY(3px);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.7),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Staff container clean SVG styling */
+.staff-container svg {
+  overflow: visible;
+  max-width: 100%;
+  height: auto;
+}
