@@ -5,12 +5,23 @@ export default function Keyboard({
   activeNotes = [],           // Physically pressed MIDI notes
   sustainedNotes = [],        // Notes sustained by pedal
   keyCount = 61,              // 25, 49, 61, 76, 88
+  keyHeight = null,           // Height in px or null for auto full-height
   labelMode = 'c-only',       // 'c-only', 'all', 'none'
   accentColor = '#38bdf8',    // Custom user color
+  theme = null,               // Active theme object
   onNoteOn,                   // Callback (midi)
   onNoteOff                   // Callback (midi)
 }) {
   const [isMouseDown, setIsMouseDown] = useState(false);
+
+  // Fallback styling if theme is not provided
+  const pianoFrame = theme?.pianoFrame || 'bg-gradient-to-b from-slate-900 via-slate-950 to-black border-slate-800';
+  const feltColor = theme?.feltColor || 'bg-gradient-to-r from-red-950 via-red-800 to-red-950';
+  const pianoRim = theme?.pianoRim || 'bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 border-slate-700/50';
+  const whiteKeyNormal = theme?.whiteKeyNormal || '#ffffff';
+  const whiteKeyBorder = theme?.whiteKeyBorder || 'border-slate-300/80';
+  const whiteKeyText = theme?.whiteKeyText || 'text-slate-500';
+  const whiteKeyTextActive = theme?.whiteKeyTextActive || 'text-slate-950 font-black';
 
   // Generate key list and layout calculations based on keyCount
   const { whiteKeys, blackKeys, totalWhiteKeys } = useMemo(() => {
@@ -70,23 +81,23 @@ export default function Keyboard({
 
   return (
     <div 
-      className="w-full select-none"
+      className="w-full h-full flex flex-col select-none overflow-hidden"
       onMouseUp={handleMouseUpGlobal}
       onMouseLeave={handleMouseUpGlobal}
     >
-      {/* Keyboard Case Frame */}
-      <div className="relative w-full bg-gradient-to-b from-slate-900 via-slate-950 to-black p-2.5 sm:p-3.5 rounded-2xl border border-slate-800 shadow-2xl overflow-hidden">
+      {/* Keyboard Case Frame - Stretches 100% width with zero horizontal waste */}
+      <div className={`w-full flex-1 flex flex-col p-1.5 sm:p-2 rounded-xl border shadow-xl overflow-hidden transition-all duration-200 ${pianoFrame}`}>
         
         {/* Felt Red Rail strip above keys */}
-        <div className="h-2 w-full bg-gradient-to-r from-red-950 via-red-800 to-red-950 rounded-t-sm shadow-inner mb-0.5" />
+        <div className={`h-2 w-full rounded-t-sm shadow-inner mb-0.5 shrink-0 ${feltColor}`} />
 
-        {/* Keyboard Bed Container */}
-        <div className="relative w-full h-44 sm:h-52 md:h-60 overflow-x-auto overflow-y-hidden rounded-b-md shadow-2xl flex">
-          <div 
-            className="relative h-full flex min-w-full"
-            style={{ minWidth: keyCount >= 76 ? '950px' : keyCount === 61 ? '750px' : 'auto' }}
-          >
-            {/* 1. White Keys */}
+        {/* Keyboard Bed Container - Stretches 100% width without blank margins */}
+        <div 
+          className="relative w-full flex-1 min-h-[120px] rounded-b-md shadow-2xl flex overflow-hidden"
+          style={{ height: keyHeight ? `${keyHeight}px` : '100%' }}
+        >
+          <div className="relative w-full h-full flex">
+            {/* 1. White Keys: Exactly fills 100% width */}
             <div className="flex w-full h-full relative z-0">
               {whiteKeys.map((k) => {
                 const isPressed = activeNotes.includes(k.midi);
@@ -105,13 +116,14 @@ export default function Keyboard({
                     onPointerEnter={() => handleKeyPointerEnter(k.midi)}
                     onPointerUp={() => handleKeyPointerUpOrLeave(k.midi)}
                     onPointerLeave={() => handleKeyPointerUpOrLeave(k.midi)}
-                    className="flex-1 h-full border-r border-slate-300/80 rounded-b-md flex flex-col justify-end items-center pb-2 cursor-pointer transition-colors duration-75 relative white-key"
+                    className={`flex-1 h-full border-r ${whiteKeyBorder} rounded-b-md flex flex-col justify-end items-center pb-2 cursor-pointer transition-colors duration-75 relative white-key`}
                     style={{
+                      width: `${100 / totalWhiteKeys}%`,
                       backgroundColor: isPressed 
                         ? accentColor 
                         : isSustained 
                           ? hexToRgba(accentColor, 0.3) 
-                          : '#ffffff',
+                          : whiteKeyNormal,
                       boxShadow: isPressed 
                         ? `${glowShadow}, inset 0 -4px 8px rgba(0,0,0,0.2)` 
                         : isSustained 
@@ -133,10 +145,10 @@ export default function Keyboard({
                       <span 
                         className={`text-[10px] sm:text-xs font-mono font-bold tracking-tight select-none transition-colors ${
                           isPressed
-                            ? 'text-slate-950 font-black'
+                            ? whiteKeyTextActive
                             : k.isC
-                              ? 'text-indigo-600 font-extrabold'
-                              : 'text-slate-500'
+                              ? 'text-indigo-500 font-extrabold'
+                              : whiteKeyText
                         }`}
                       >
                         {k.name}
@@ -147,18 +159,16 @@ export default function Keyboard({
               })}
             </div>
 
-            {/* 2. Black Keys */}
+            {/* 2. Black Keys: Proportional to white keys across 100% width */}
             {blackKeys.map((k) => {
               const isPressed = activeNotes.includes(k.midi);
               const isSustained = !isPressed && sustainedNotes.includes(k.midi);
 
-              // Calculate exact horizontal position relative to white keys
-              // Find the white key immediately preceding this black key
               const precedingWhiteKey = whiteKeys.filter((w) => w.midi < k.midi).pop();
               const precedingIndex = precedingWhiteKey ? whiteKeys.indexOf(precedingWhiteKey) : 0;
               
               const whiteKeyPct = 100 / totalWhiteKeys;
-              const blackWidthPct = whiteKeyPct * 0.65; // ~65% width of a white key
+              const blackWidthPct = whiteKeyPct * 0.65; // ~65% width of white key
               const leftPct = (precedingIndex + 1) * whiteKeyPct - (blackWidthPct / 2);
 
               return (
@@ -172,11 +182,11 @@ export default function Keyboard({
                   style={{
                     left: `${leftPct}%`,
                     width: `${blackWidthPct}%`,
-                    backgroundColor: isPressed 
+                    background: isPressed 
                       ? accentColor 
                       : isSustained 
                         ? hexToRgba(accentColor, 0.45) 
-                        : undefined,
+                        : (theme?.blackKeyNormal || undefined),
                     boxShadow: isPressed 
                       ? `${glowShadow}, inset 0 -3px 6px rgba(0,0,0,0.4)` 
                       : isSustained 
@@ -184,7 +194,6 @@ export default function Keyboard({
                         : undefined
                   }}
                 >
-                  {/* Subtle note name on active black key */}
                   {isPressed && (
                     <span className="text-[9px] font-mono font-bold text-slate-950 pb-0.5">
                       {k.name}
@@ -196,8 +205,8 @@ export default function Keyboard({
           </div>
         </div>
 
-        {/* Realistic Wood / Metallic Bottom Edge */}
-        <div className="h-2 w-full bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 rounded-b-lg mt-1 border-t border-slate-700/50" />
+        {/* Realistic Piano Bottom Edge */}
+        <div className={`h-2 w-full rounded-b-lg mt-1 border-t shrink-0 ${pianoRim}`} />
       </div>
     </div>
   );

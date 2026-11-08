@@ -6,9 +6,19 @@ import { BookOpen } from 'lucide-react';
 export default function Staff({
   activeNotes = [],
   keySignature = 'C',
-  accentColor = '#38bdf8'
+  accentColor = '#38bdf8',
+  theme = null
 }) {
   const containerRef = useRef(null);
+
+  // Colors based on theme
+  const staffColor = theme?.staffColor || '#e2e8f0';
+  const staffLineColor = theme?.staffLineColor || '#64748b';
+  const staffRestColor = theme?.staffRestColor || '#475569';
+  const cardBg = theme?.cardBg || 'bg-slate-900/90 border-slate-800/80 text-slate-100 shadow-xl';
+  const cardHeaderBorder = theme?.cardHeaderBorder || 'border-slate-800';
+  const subText = theme?.subText || 'text-slate-400';
+  const staffCanvasBg = theme?.staffCanvasBg || 'bg-slate-950/40 rounded-xl';
 
   // Find human-readable label for key signature
   const currentKeyInfo = KEY_SIGNATURES.find((k) => k.id === keySignature) || {
@@ -23,21 +33,21 @@ export default function Staff({
     containerRef.current.innerHTML = '';
 
     const width = containerRef.current.clientWidth || 480;
-    const height = 270;
-    const staveWidth = Math.max(width - 40, 320);
+    const height = 260;
+    const staveWidth = Math.max(width - 40, 310);
 
     // Initialize VexFlow SVG Renderer
     const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
     renderer.resize(width, height);
     const context = renderer.getContext();
 
-    // Style stave lines and clefs in sleek high-contrast light slate
-    context.setFillStyle('#e2e8f0');
-    context.setStrokeStyle('#64748b');
+    // Set colors from theme
+    context.setFillStyle(staffColor);
+    context.setStrokeStyle(staffLineColor);
     context.setLineWidth(1.2);
 
     // 1. Create Treble Stave (Clave de Sol)
-    const staveTreble = new Stave(30, 20, staveWidth);
+    const staveTreble = new Stave(30, 15, staveWidth);
     staveTreble.addClef('treble');
     if (keySignature && keySignature !== 'C') {
       staveTreble.addKeySignature(keySignature);
@@ -45,7 +55,7 @@ export default function Staff({
     staveTreble.setContext(context).draw();
 
     // 2. Create Bass Stave (Clave de Fa)
-    const staveBass = new Stave(30, 130, staveWidth);
+    const staveBass = new Stave(30, 125, staveWidth);
     staveBass.addClef('bass');
     if (keySignature && keySignature !== 'C') {
       staveBass.addKeySignature(keySignature);
@@ -68,8 +78,6 @@ export default function Staff({
     // 4. Split active notes into Treble (>= 60) and Bass (< 60)
     const trebleSpecs = [];
     const bassSpecs = [];
-
-    // Sort MIDI ascending
     const sortedNotes = [...activeNotes].sort((a, b) => a - b);
 
     sortedNotes.forEach((midi) => {
@@ -84,17 +92,15 @@ export default function Staff({
     // Helper to build StaveNote
     const buildNote = (specs, clef, defaultRestKey) => {
       if (specs.length === 0) {
-        // Render whole rest
         const rest = new StaveNote({
           keys: [defaultRestKey],
           duration: 'wr',
           clef
         });
-        rest.setStyle({ fillStyle: '#475569', strokeStyle: '#475569' });
+        rest.setStyle({ fillStyle: staffRestColor, strokeStyle: staffRestColor });
         return rest;
       }
 
-      // Unique keys sorted ascending
       const keys = specs.map((s) => s.vexKey);
       const note = new StaveNote({
         keys,
@@ -109,7 +115,7 @@ export default function Staff({
         }
       });
 
-      // Highlight active played notes with chosen color
+      // Highlight active played notes
       note.setStyle({
         fillStyle: accentColor,
         strokeStyle: accentColor
@@ -131,7 +137,7 @@ export default function Staff({
       voiceBass.setStrict(false);
       voiceBass.addTickables([bassNote]);
 
-      // Format and align notes horizontally in the staves
+      // Format and align notes horizontally
       const startX = Math.max(staveTreble.getNoteStartX(), staveBass.getNoteStartX()) + 15;
       const availableWidth = staveWidth - (startX - 30) - 30;
 
@@ -146,47 +152,55 @@ export default function Staff({
     } catch (err) {
       console.warn('Error al formatear partitura VexFlow:', err);
     }
-  }, [activeNotes, keySignature, accentColor]);
+  }, [activeNotes, keySignature, accentColor, staffColor, staffLineColor, staffRestColor]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-800/80 p-5 shadow-xl">
+    <div className={`flex flex-col h-full rounded-2xl border p-5 transition-all duration-300 ${cardBg}`}>
       {/* Header with Key Signature badge */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+      <div className={`flex items-center justify-between pb-3 border-b ${cardHeaderBorder}`}>
         <div className="flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-slate-400" />
-          <h2 className="text-xs uppercase tracking-wider font-semibold text-slate-400">
+          <BookOpen className={`w-4 h-4 ${subText}`} />
+          <h2 className={`text-xs uppercase tracking-wider font-semibold ${subText}`}>
             Pentagrama en Tiempo Real (Grand Staff)
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-semibold bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded-full">
+          <span 
+            className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full border transition-colors"
+            style={{ 
+              borderColor: `${accentColor}60`,
+              backgroundColor: `${accentColor}15`,
+              color: accentColor 
+            }}
+          >
             Key: {currentKeyInfo.label || `${keySignature} Maj`}
           </span>
         </div>
       </div>
 
-      {/* Notation SVG Canvas */}
+      {/* Notation SVG Canvas with themed background */}
       <div className="flex-1 flex items-center justify-center py-2 overflow-x-auto overflow-y-hidden">
         <div 
-          ref={containerRef} 
-          className="staff-container min-w-[340px] w-full flex justify-center items-center select-none"
-        />
+          className={`min-w-[320px] w-full flex justify-center items-center select-none py-1 transition-all ${staffCanvasBg}`}
+        >
+          <div ref={containerRef} className="staff-container w-full flex justify-center" />
+        </div>
       </div>
 
       {/* Footer / Legend */}
-      <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-500">
+      <div className={`pt-2 border-t ${cardHeaderBorder} flex items-center justify-between text-[11px] ${subText}`}>
         <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-indigo-400"></span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: accentColor }}></span>
             Clave de Sol (&ge; C4)
           </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-slate-400"></span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block w-2 h-2 rounded-full opacity-60" style={{ backgroundColor: staffLineColor }}></span>
             Clave de Fa (&lt; C4)
           </span>
         </div>
-        <span className="font-mono text-slate-400">
-          VexFlow 4 Notation
+        <span className="font-mono opacity-70">
+          VexFlow 4 Engine
         </span>
       </div>
     </div>

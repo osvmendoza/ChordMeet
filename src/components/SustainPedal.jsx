@@ -4,19 +4,23 @@ export default function SustainPedal({
   isPressed = false,
   value = 0,
   onToggle = null,
-  accentColor = '#38bdf8'
+  accentColor = '#38bdf8',
+  theme = null
 }) {
+  const pedalBox = theme?.pedalBox || 'bg-slate-900/90 border-slate-800 text-slate-100';
+  const subText = theme?.subText || 'text-slate-400';
+
   return (
-    <div className="flex items-center gap-4 bg-slate-900/90 border border-slate-800 rounded-xl px-4 py-2.5 shadow-lg">
+    <div className={`flex items-center gap-4 rounded-xl border px-4 py-2.5 shadow-lg transition-all ${pedalBox}`}>
       {/* 3D Mechanical Pedal Graphic */}
       <div 
         onClick={() => onToggle && onToggle(!isPressed ? 127 : 0)}
         className="cursor-pointer group flex flex-col items-center select-none"
         title="Haz clic para activar/desactivar pedal de sustain"
       >
-        <div className="w-14 h-20 bg-slate-950 rounded-lg p-1.5 flex flex-col items-center justify-end relative shadow-inner border border-slate-800">
+        <div className="w-14 h-20 bg-black/40 rounded-lg p-1.5 flex flex-col items-center justify-end relative shadow-inner border border-black/30">
           {/* Pedal base slot */}
-          <div className="w-8 h-2 bg-slate-800 rounded-t-sm mb-1" />
+          <div className="w-8 h-2 bg-black/60 rounded-t-sm mb-1" />
 
           {/* Physical Pedal Lever */}
           <div
@@ -49,7 +53,7 @@ export default function SustainPedal({
             }`}
             style={{ backgroundColor: isPressed ? accentColor : '#64748b' }}
           />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+          <span className="text-xs font-bold uppercase tracking-wider opacity-90">
             Pedal Sustain (CC 64)
           </span>
         </div>
@@ -58,13 +62,13 @@ export default function SustainPedal({
           <span
             className={`text-xs font-mono font-bold px-2 py-0.5 rounded transition-all ${
               isPressed
-                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                : 'bg-slate-800 text-slate-500 border border-slate-700/50'
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40'
+                : 'bg-black/20 text-slate-500 border border-black/30'
             }`}
           >
             {isPressed ? 'SUSTAIN ACTIVO' : 'LIBERADO'}
           </span>
-          <span className="text-[11px] font-mono text-slate-500">
+          <span className={`text-[11px] font-mono ${subText}`}>
             Valor: {value}
           </span>
         </div>

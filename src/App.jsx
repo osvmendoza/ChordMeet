@@ -1,12 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HeaderControls from './components/HeaderControls';
+import QuadrantContainer from './components/QuadrantContainer';
 import ChordDisplay from './components/ChordDisplay';
 import Staff from './components/Staff';
 import Keyboard from './components/Keyboard';
 import SustainPedal from './components/SustainPedal';
+import ChordHistory from './components/ChordHistory';
+import Metronome from './components/Metronome';
+
 import { useWebMidi } from './hooks/useWebMidi';
 import { synth } from './utils/audioSynth';
-import { Info, Keyboard as KeyboardIcon } from 'lucide-react';
+import { THEMES } from './utils/themeConfig';
+import { Chord, Midi } from '@tonaljs/tonal';
+import { Eye, GripVertical, GripHorizontal } from 'lucide-react';
 
 // Computer QWERTY keyboard map for virtual testing (C4 to E5)
 const QWERTY_MIDI_MAP = {
@@ -32,12 +38,45 @@ const QWERTY_MIDI_MAP = {
 
 export default function App() {
   // App preferences state
+  const [currentThemeId, setCurrentThemeId] = useState('studio');
   const [keyCount, setKeyCount] = useState(61);
-  const [labelMode, setLabelMode] = useState('c-only'); // 'c-only', 'all', 'none'
+  const [labelMode, setLabelMode] = useState('c-only');
   const [accentColor, setAccentColor] = useState('#38bdf8');
   const [keySignature, setKeySignature] = useState('C');
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [audioVolume, setAudioVolume] = useState(0.35);
+
+  // Navbar Visibility state (Toggleable with 'H')
+  const [navbarVisible, setNavbarVisible] = useState(true);
+
+  // 4 Quadrants State (q1: Top-Left, q2: Top-Right, q3: Bottom-Left, q4: Bottom-Right)
+  // Default: Q1 = Chords, Q2 = Staff, Q3 = Keyboard (merged full bottom by default), Q4 = Metronome
+  const [quadrants, setQuadrants] = useState({
+    q1: 'chords',
+    q2: 'staff',
+    q3: 'keyboard',
+    q4: 'history'
+  });
+
+  // Quadrant Merge Mode:
+  // 'grid' (4 quadrants 2x2)
+  // 'merge-bottom' (2 top + 1 merged bottom full width - ideal for piano)
+  // 'merge-top' (1 merged top full width + 2 bottom)
+  // 'merge-left' (1 merged left full height + 2 right)
+  // 'merge-right' (2 left + 1 merged right full height)
+  const [layoutMode, setLayoutMode] = useState('merge-bottom');
+
+  // Split percentages (Cartesian 2-axis dividers)
+  const [splitX, setSplitX] = useState(50); // Left % vs Right % (15 to 85)
+  const [splitY, setSplitY] = useState(48); // Top % vs Bottom % (15 to 85)
+
+  // Drag and drop state
+  const [dragOverQuadrant, setDragOverQuadrant] = useState(null);
+  const [draggedWidget, setDraggedWidget] = useState(null);
+  const [chordHistory, setChordHistory] = useState([]);
+
+  const activeTheme = THEMES[currentThemeId] || THEMES.studio;
+  const gridContainerRef = useRef(null);
 
   // Web MIDI Hook
   const {
@@ -50,7 +89,6 @@ export default function App() {
     selectedInputId,
     setSelectedInputId,
     isSupported,
-    error: midiError,
     triggerNoteOn,
     triggerNoteOff,
     handleSustainChange,
@@ -60,28 +98,46 @@ export default function App() {
     holdNotesWithSustain: true
   });
 
-  // Handle synth volume changes
-  const handleVolumeChange = (vol) => {
-    setAudioVolume(vol);
-    synth.setVolume(vol);
-  };
+  // Track chord history
+  useEffect(() => {
+    if (allAudibleNotes.length >= 2) {
+      const noteNames = allAudibleNotes.map((m) => Midi.midiToNoteName(m, { pitchClass: true }));
+      const detected = Chord.detect(noteNames);
+      if (detected.length > 0) {
+        const chordName = detected[0];
+        setChordHistory((prev) => {
+          if (prev.length > 0 && prev[prev.length - 1].chord === chordName) {
+            return prev;
+          }
+          const next = [...prev, { id: Date.now(), chord: chordName }];
+          return next.slice(-7);
+        });
+      }
+    }
+  }, [allAudibleNotes]);
 
-  const handleToggleAudio = () => {
-    const nextState = !audioEnabled;
-    setAudioEnabled(nextState);
-    synth.setEnabled(nextState);
-  };
+  // Keyboard shortcut: Toggle Navbar with 'H'
+  useEffect(() => {
+    const handleShortcut = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        setNavbarVisible((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  }, []);
 
   // Keyboard QWERTY event listeners for testing without physical MIDI
   useEffect(() => {
     const pressedKeys = new Set();
 
     const handleKeyDown = (e) => {
-      // Ignore if user is typing in an input
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
 
       const key = e.key.toLowerCase();
-      if (pressedKeys.has(key)) return; // Prevent key repeat
+      if (pressedKeys.has(key)) return;
 
       if (key === ' ') {
         e.preventDefault();
@@ -126,100 +182,457 @@ export default function App() {
     };
   }, [triggerNoteOn, triggerNoteOff, handleSustainChange]);
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-sky-500 selection:text-white">
-      {/* 1. Header with Controls */}
-      <HeaderControls
-        inputs={inputs}
-        selectedInputId={selectedInputId}
-        onSelectInput={setSelectedInputId}
-        isMidiSupported={isSupported}
-        midiError={midiError}
-        keyCount={keyCount}
-        onChangeKeyCount={setKeyCount}
-        labelMode={labelMode}
-        onChangeLabelMode={setLabelMode}
-        accentColor={accentColor}
-        onChangeAccentColor={setAccentColor}
-        keySignature={keySignature}
-        onChangeKeySignature={setKeySignature}
-        audioEnabled={audioEnabled}
-        onToggleAudio={handleToggleAudio}
-        audioVolume={audioVolume}
-        onChangeAudioVolume={handleVolumeChange}
-        onClearNotes={clearAllNotes}
-      />
+  // Handle Drag & Drop between quadrants (Swaps or moves)
+  const handleDropOnQuadrant = (targetQ, e) => {
+    e.preventDefault();
+    const widgetId = e.dataTransfer.getData('text/plain') || draggedWidget;
+    const srcQ = e.dataTransfer.getData('source-quadrant');
+    if (!widgetId) return;
 
-      {/* Main Classroom Workspace */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6 justify-between">
-        
-        {/* Info Banner when in Virtual Mode */}
-        {inputs.length === 0 && (
-          <div className="bg-sky-950/40 border border-sky-800/60 rounded-xl px-4 py-2.5 flex items-center justify-between text-xs text-sky-200 shadow-sm">
-            <div className="flex items-center gap-2.5">
-              <Info className="w-4 h-4 text-sky-400 shrink-0" />
-              <span>
-                Conecta tu <strong>teclado MIDI USB</strong> para empezar a tocar en vivo. También puedes usar el ratón o las teclas 
-                <span className="font-mono bg-sky-900/60 px-1.5 py-0.5 rounded mx-1 text-sky-300">A, W, S, E, D, F, G...</span> y 
-                <span className="font-mono bg-sky-900/60 px-1.5 py-0.5 rounded mx-1 text-sky-300">Espacio</span> para el sustain.
+    setQuadrants((prev) => {
+      const next = { ...prev };
+      if (srcQ && srcQ !== targetQ) {
+        // Swap contents
+        const existingInTarget = prev[targetQ];
+        next[targetQ] = widgetId;
+        next[srcQ] = existingInTarget || 'empty';
+      } else {
+        next[targetQ] = widgetId;
+      }
+      return next;
+    });
+
+    setDragOverQuadrant(null);
+    setDraggedWidget(null);
+  };
+
+  // Resizing vertical divider (X axis: Left vs Right)
+  const handleXResizeStart = (e) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startRatio = splitX;
+    const container = gridContainerRef.current;
+    if (!container) return;
+    const totalW = container.clientWidth;
+
+    const onMouseMove = (moveEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const deltaPct = (delta / totalW) * 100;
+      const newRatio = Math.min(85, Math.max(15, Math.round(startRatio + deltaPct)));
+      setSplitX(newRatio);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Resizing horizontal divider (Y axis: Top vs Bottom)
+  const handleYResizeStart = (e) => {
+    e.preventDefault();
+    const startY = e.clientY;
+    const startRatio = splitY;
+    const container = gridContainerRef.current;
+    if (!container) return;
+    const totalH = container.clientHeight;
+
+    const onMouseMove = (moveEvent) => {
+      const delta = moveEvent.clientY - startY;
+      const deltaPct = (delta / totalH) * 100;
+      const newRatio = Math.min(85, Math.max(15, Math.round(startRatio + deltaPct)));
+      setSplitY(newRatio);
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
+  // Change Theme
+  const handleThemeChange = (newThemeId) => {
+    setCurrentThemeId(newThemeId);
+    const newTheme = THEMES[newThemeId];
+    if (newTheme?.defaultAccent) {
+      setAccentColor(newTheme.defaultAccent);
+    }
+  };
+
+  // Synth controls
+  const handleVolumeChange = (vol) => {
+    setAudioVolume(vol);
+    synth.setVolume(vol);
+  };
+
+  const handleToggleAudio = () => {
+    const nextState = !audioEnabled;
+    setAudioEnabled(nextState);
+    synth.setEnabled(nextState);
+  };
+
+  // Render widget inside any quadrant
+  const renderWidgetContent = (widgetId) => {
+    switch (widgetId) {
+      case 'keyboard':
+        return (
+          <div className="w-full h-full flex flex-col justify-between p-1.5 gap-1.5 overflow-hidden">
+            <div className="flex-1 w-full overflow-hidden">
+              <Keyboard
+                activeNotes={activeNotes}
+                sustainedNotes={sustainedNotes}
+                keyCount={keyCount}
+                labelMode={labelMode}
+                accentColor={accentColor}
+                theme={activeTheme}
+                onNoteOn={triggerNoteOn}
+                onNoteOff={triggerNoteOff}
+              />
+            </div>
+            {/* Integrated Pedal bar */}
+            <div className="flex items-center justify-between gap-3 px-1 shrink-0">
+              <SustainPedal
+                isPressed={sustainPedal}
+                value={sustainValue}
+                onToggle={handleSustainChange}
+                accentColor={accentColor}
+                theme={activeTheme}
+              />
+              <span className="text-[10px] font-mono opacity-50 hidden sm:inline">
+                {inputs.length > 0 ? `MIDI USB: ${inputs[0].name}` : 'Modo Virtual Teclado'}
               </span>
             </div>
-            <div className="hidden md:flex items-center gap-1.5 text-slate-400">
-              <KeyboardIcon className="w-3.5 h-3.5" />
-              <span>Modo Virtual Listo</span>
-            </div>
           </div>
-        )}
+        );
 
-        {/* 2. Middle Section: Split into Chord Visualizer & Grand Staff */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 min-h-[300px]">
-          {/* Chord Visualizer (Left side: 5 cols on lg) */}
-          <section className="lg:col-span-5 flex flex-col">
-            <ChordDisplay 
-              activeNotes={allAudibleNotes} 
-              accentColor={accentColor} 
-            />
-          </section>
-
-          {/* Grand Staff in Real Time (Right side: 7 cols on lg) */}
-          <section className="lg:col-span-7 flex flex-col">
+      case 'staff':
+        return (
+          <div className="w-full h-full p-1.5 overflow-auto">
             <Staff
               activeNotes={allAudibleNotes}
               keySignature={keySignature}
               accentColor={accentColor}
+              theme={activeTheme}
             />
-          </section>
-        </div>
+          </div>
+        );
 
-        {/* 3. Bottom Section: Piano Keyboard + Sustain Pedal Indicator */}
-        <section className="flex flex-col gap-3 mt-auto">
-          {/* Piano Keyboard Component */}
-          <Keyboard
-            activeNotes={activeNotes}
-            sustainedNotes={sustainedNotes}
-            keyCount={keyCount}
-            labelMode={labelMode}
-            accentColor={accentColor}
-            onNoteOn={triggerNoteOn}
-            onNoteOff={triggerNoteOff}
-          />
-
-          {/* Sustain Pedal Graphic & Quick Status bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
-            <SustainPedal
-              isPressed={sustainPedal}
-              value={sustainValue}
-              onToggle={handleSustainChange}
+      case 'chords':
+        return (
+          <div className="w-full h-full p-1.5 overflow-auto">
+            <ChordDisplay
+              activeNotes={allAudibleNotes}
               accentColor={accentColor}
+              theme={activeTheme}
             />
+          </div>
+        );
 
-            {/* Quick status tips */}
-            <div className="text-right text-xs text-slate-500 hidden sm:block">
-              <p>Optimizada para transmisión en <span className="text-slate-400 font-medium">OBS Studio</span> y clases por <span className="text-slate-400 font-medium">Zoom / Meet</span></p>
-              <p className="text-[11px] text-slate-600 mt-0.5">Detección polifónica por hardware USB sin latencia</p>
+      case 'metronome':
+        return (
+          <div className="w-full h-full flex items-center justify-center p-3">
+            <Metronome accentColor={accentColor} theme={activeTheme} />
+          </div>
+        );
+
+      case 'history':
+        return (
+          <div className="w-full h-full flex flex-col justify-center p-3">
+            <ChordHistory
+              history={chordHistory}
+              onClear={() => setChordHistory([])}
+              accentColor={accentColor}
+              theme={activeTheme}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Render a specific quadrant with its dropzone
+  const renderQuadrant = (qId) => (
+    <div
+      className="w-full h-full overflow-hidden"
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOverQuadrant(qId);
+      }}
+      onDragLeave={() => setDragOverQuadrant(null)}
+      onDrop={(e) => handleDropOnQuadrant(qId, e)}
+    >
+      <QuadrantContainer
+        quadrantId={qId}
+        widgetId={quadrants[qId] || 'empty'}
+        onChangeWidget={(newWidget) => setQuadrants((prev) => ({ ...prev, [qId]: newWidget }))}
+        onDragStartWidget={(wId) => setDraggedWidget(wId)}
+        isDropTarget={dragOverQuadrant === qId}
+        accentColor={accentColor}
+        theme={activeTheme}
+      >
+        {renderWidgetContent(quadrants[qId])}
+      </QuadrantContainer>
+    </div>
+  );
+
+  return (
+    <div className={`h-screen w-screen flex flex-col overflow-hidden transition-colors duration-200 select-none ${activeTheme.bgClass}`}>
+      
+      {/* 1. Compact Navbar (Hidden when navbarVisible is false) */}
+      {navbarVisible && (
+        <HeaderControls
+          inputs={inputs}
+          selectedInputId={selectedInputId}
+          onSelectInput={setSelectedInputId}
+          keyCount={keyCount}
+          onChangeKeyCount={setKeyCount}
+          accentColor={accentColor}
+          onChangeAccentColor={setAccentColor}
+          keySignature={keySignature}
+          onChangeKeySignature={setKeySignature}
+          currentThemeId={currentThemeId}
+          onChangeTheme={handleThemeChange}
+          theme={activeTheme}
+          layoutMode={layoutMode}
+          onChangeLayoutMode={setLayoutMode}
+          audioEnabled={audioEnabled}
+          onToggleAudio={handleToggleAudio}
+          audioVolume={audioVolume}
+          onChangeAudioVolume={handleVolumeChange}
+          onClearNotes={clearAllNotes}
+          onHideNavbar={() => setNavbarVisible(false)}
+        />
+      )}
+
+      {/* Floating Toggle Button when Navbar is Hidden */}
+      {!navbarVisible && (
+        <button
+          onClick={() => setNavbarVisible(true)}
+          className="fixed top-2.5 right-3 z-50 px-2.5 py-1 rounded-lg bg-black/60 hover:bg-black/90 text-white/80 hover:text-white text-xs font-semibold backdrop-blur-md border border-white/20 shadow-xl opacity-40 hover:opacity-100 transition-all flex items-center gap-1.5"
+          title="Mostrar barra de navegación (Atajo: tecla H)"
+        >
+          <Eye className="w-3.5 h-3.5" />
+          <span>Barra (H)</span>
+        </button>
+      )}
+
+      {/* 2. 4-Quadrant Cartesian Canvas with Merging & Resizing */}
+      <main 
+        ref={gridContainerRef}
+        className="flex-1 w-full h-full p-2 overflow-hidden flex flex-col relative"
+      >
+        {/* LAYOUT A: 'grid' (4 Cuadrantes 2x2 estándar) */}
+        {layoutMode === 'grid' && (
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            {/* Top Row: Q1 (Left) + Q2 (Right) */}
+            <div className="flex w-full overflow-hidden" style={{ height: `${splitY}%` }}>
+              <div className="h-full overflow-hidden" style={{ width: `${splitX}%` }}>
+                {renderQuadrant('q1')}
+              </div>
+              
+              {/* Vertical Divider X */}
+              <div
+                onMouseDown={handleXResizeStart}
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                title="Arrastra para cambiar el ancho de las columnas"
+              >
+                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="h-full flex-1 overflow-hidden">
+                {renderQuadrant('q2')}
+              </div>
+            </div>
+
+            {/* Horizontal Divider Y */}
+            <div
+              onMouseDown={handleYResizeStart}
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              title="Arrastra para cambiar la altura de las filas"
+            >
+              <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+            </div>
+
+            {/* Bottom Row: Q3 (Left) + Q4 (Right) */}
+            <div className="flex-1 flex w-full overflow-hidden">
+              <div className="h-full overflow-hidden" style={{ width: `${splitX}%` }}>
+                {renderQuadrant('q3')}
+              </div>
+
+              {/* Vertical Divider X */}
+              <div
+                onMouseDown={handleXResizeStart}
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                title="Arrastra para cambiar el ancho de las columnas"
+              >
+                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="h-full flex-1 overflow-hidden">
+                {renderQuadrant('q4')}
+              </div>
             </div>
           </div>
-        </section>
+        )}
+
+        {/* LAYOUT B: 'merge-bottom' (2 Arriba Q1 & Q2 + Fusionar Abajo Q3 a lo ancho) */}
+        {layoutMode === 'merge-bottom' && (
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            {/* Top Row: Q1 and Q2 */}
+            <div className="flex w-full overflow-hidden" style={{ height: `${splitY}%` }}>
+              <div className="h-full overflow-hidden" style={{ width: `${splitX}%` }}>
+                {renderQuadrant('q1')}
+              </div>
+              
+              {/* Vertical Divider X */}
+              <div
+                onMouseDown={handleXResizeStart}
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                title="Arrastra para cambiar la proporción izquierda / derecha"
+              >
+                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="h-full flex-1 overflow-hidden">
+                {renderQuadrant('q2')}
+              </div>
+            </div>
+
+            {/* Horizontal Divider Y */}
+            <div
+              onMouseDown={handleYResizeStart}
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              title="Arrastra para cambiar la altura del teclado / panel inferior"
+            >
+              <div className="w-16 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+            </div>
+
+            {/* Bottom Row: Merged Q3 spanning 100% full width */}
+            <div className="flex-1 w-full overflow-hidden">
+              {renderQuadrant('q3')}
+            </div>
+          </div>
+        )}
+
+        {/* LAYOUT C: 'merge-top' (Fusionar Arriba Q1 a lo ancho + 2 Abajo Q3 & Q4) */}
+        {layoutMode === 'merge-top' && (
+          <div className="w-full h-full flex flex-col overflow-hidden">
+            {/* Top Row: Merged Q1 spanning 100% full width */}
+            <div className="w-full overflow-hidden" style={{ height: `${splitY}%` }}>
+              {renderQuadrant('q1')}
+            </div>
+
+            {/* Horizontal Divider Y */}
+            <div
+              onMouseDown={handleYResizeStart}
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              title="Arrastra para cambiar la altura del panel superior"
+            >
+              <div className="w-16 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+            </div>
+
+            {/* Bottom Row: Q3 and Q4 */}
+            <div className="flex-1 flex w-full overflow-hidden">
+              <div className="h-full overflow-hidden" style={{ width: `${splitX}%` }}>
+                {renderQuadrant('q3')}
+              </div>
+
+              <div
+                onMouseDown={handleXResizeStart}
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                title="Arrastra para cambiar el ancho de las columnas"
+              >
+                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="h-full flex-1 overflow-hidden">
+                {renderQuadrant('q4')}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LAYOUT D: 'merge-left' (Fusionar Izquierda Q1 a lo alto + 2 Derecha Q2 & Q4) */}
+        {layoutMode === 'merge-left' && (
+          <div className="w-full h-full flex overflow-hidden">
+            {/* Left Column: Merged Q1 spanning 100% full height */}
+            <div className="h-full overflow-hidden" style={{ width: `${splitX}%` }}>
+              {renderQuadrant('q1')}
+            </div>
+
+            {/* Vertical Divider X */}
+            <div
+              onMouseDown={handleXResizeStart}
+              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              title="Arrastra para cambiar el ancho de la columna izquierda"
+            >
+              <div className="h-12 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+            </div>
+
+            {/* Right Column: Q2 (Top) and Q4 (Bottom) */}
+            <div className="flex-1 h-full flex flex-col overflow-hidden">
+              <div className="w-full overflow-hidden" style={{ height: `${splitY}%` }}>
+                {renderQuadrant('q2')}
+              </div>
+
+              <div
+                onMouseDown={handleYResizeStart}
+                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              >
+                <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="flex-1 w-full overflow-hidden">
+                {renderQuadrant('q4')}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LAYOUT E: 'merge-right' (2 Izquierda Q1 & Q3 + Fusionar Derecha Q2 a lo alto) */}
+        {layoutMode === 'merge-right' && (
+          <div className="w-full h-full flex overflow-hidden">
+            {/* Left Column: Q1 (Top) and Q3 (Bottom) */}
+            <div className="h-full flex flex-col overflow-hidden" style={{ width: `${splitX}%` }}>
+              <div className="w-full overflow-hidden" style={{ height: `${splitY}%` }}>
+                {renderQuadrant('q1')}
+              </div>
+
+              <div
+                onMouseDown={handleYResizeStart}
+                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              >
+                <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              </div>
+
+              <div className="flex-1 w-full overflow-hidden">
+                {renderQuadrant('q3')}
+              </div>
+            </div>
+
+            {/* Vertical Divider X */}
+            <div
+              onMouseDown={handleXResizeStart}
+              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+            >
+              <div className="h-12 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+            </div>
+
+            {/* Right Column: Merged Q2 spanning 100% full height */}
+            <div className="flex-1 h-full overflow-hidden">
+              {renderQuadrant('q2')}
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

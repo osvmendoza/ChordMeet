@@ -1,4 +1,4 @@
-// Web Audio API Synthesizer for virtual/audio feedback
+// Web Audio API Synthesizer & Metronome for virtual/audio feedback
 class PianoSynth {
   constructor() {
     this.audioCtx = null;
@@ -114,6 +114,29 @@ class PianoSynth {
     }, 180);
 
     this.activeVoices.delete(midi);
+  }
+
+  // Metronome tick sound (clean wooden click)
+  playMetronomeClick(isDownbeat = false) {
+    this.init();
+    if (!this.audioCtx) return;
+
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    // Higher pitch for first beat / downbeat
+    osc.frequency.setValueAtTime(isDownbeat ? 1200 : 800, now);
+
+    gain.gain.setValueAtTime(isDownbeat ? 0.35 : 0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.045);
   }
 
   // Cut all active voices

@@ -1,35 +1,42 @@
 import React from 'react';
 import { 
-  Piano, 
   Usb, 
   Volume2, 
   VolumeX, 
   Palette, 
-  Tag, 
   RotateCcw,
-  Sliders
+  EyeOff,
+  Grid2X2,
+  Columns,
+  Rows
 } from 'lucide-react';
 import { KEY_SIGNATURES, COLOR_PRESETS, KEYBOARD_CONFIGS } from '../utils/musicHelpers';
+import { THEMES } from '../utils/themeConfig';
 
 export default function HeaderControls({
   // MIDI states
   inputs = [],
   selectedInputId = 'all',
   onSelectInput,
-  isMidiSupported = true,
-  midiError = null,
   
   // Keyboard configurations
   keyCount = 61,
   onChangeKeyCount,
-  labelMode = 'c-only',
-  onChangeLabelMode,
   accentColor = '#38bdf8',
   onChangeAccentColor,
 
   // Key signature
   keySignature = 'C',
   onChangeKeySignature,
+
+  // Theme
+  currentThemeId = 'studio',
+  onChangeTheme,
+  theme = null,
+
+  // Quadrant Layout Mode (Fusión de cuadrantes)
+  layoutMode = 'grid', // 'grid', 'merge-top', 'merge-bottom', 'merge-left', 'merge-right'
+  onChangeLayoutMode,
 
   // Audio synthesizer
   audioEnabled = true,
@@ -38,67 +45,89 @@ export default function HeaderControls({
   onChangeAudioVolume,
 
   // Reset
-  onClearNotes
+  onClearNotes,
+
+  // Hide Navbar
+  onHideNavbar
 }) {
+  const headerBg = theme?.headerBg || 'bg-slate-900/95 border-slate-800 text-white';
+
   return (
-    <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800/80 px-4 py-3 sticky top-0 z-50 shadow-md">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+    <header className={`backdrop-blur-md border-b px-3 py-1.5 z-40 shadow-sm transition-colors duration-200 select-none ${headerBg}`}>
+      <div className="max-w-full mx-auto flex flex-wrap items-center justify-between gap-2">
         
-        {/* Brand / Title */}
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-tr from-sky-500 to-indigo-600 rounded-xl shadow-lg shadow-sky-500/20 text-white">
-            <Piano className="w-5 h-5 stroke-[2.2]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-white">
-                ChordMeet
-              </h1>
-              <span className="text-[10px] font-semibold uppercase bg-sky-500/20 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 rounded">
-                Live Piano
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">
-              Web MIDI API • Tonal.js • VexFlow
-            </p>
-          </div>
-        </div>
-
-        {/* MIDI Connection Status & Selector */}
-        <div className="flex items-center gap-2 bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5">
-          <Usb className={`w-4 h-4 ${inputs.length > 0 ? 'text-emerald-400' : 'text-slate-500'}`} />
-          {inputs.length > 0 ? (
-            <select
-              value={selectedInputId}
-              onChange={(e) => onSelectInput(e.target.value)}
-              className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer"
-            >
-              <option value="all" className="bg-slate-900 text-slate-200">
-                Todos los teclados ({inputs.length})
-              </option>
-              {inputs.map((dev) => (
-                <option key={dev.id} value={dev.id} className="bg-slate-900 text-slate-200">
-                  {dev.name}
+        {/* Left: MIDI Device & Quick Audio */}
+        <div className="flex items-center gap-2">
+          {/* MIDI Connection Status & Selector */}
+          <div className="flex items-center gap-1.5 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <Usb className={`w-3.5 h-3.5 ${inputs.length > 0 ? 'text-emerald-400' : 'text-slate-500'}`} />
+            {inputs.length > 0 ? (
+              <select
+                value={selectedInputId}
+                onChange={(e) => onSelectInput(e.target.value)}
+                className="bg-transparent text-xs font-semibold focus:outline-none cursor-pointer max-w-[140px] truncate"
+              >
+                <option value="all" className="bg-slate-900 text-slate-200">
+                  Todos ({inputs.length})
                 </option>
-              ))}
-            </select>
-          ) : (
-            <span className="text-xs text-amber-400 font-medium">
-              Modo Virtual (Sin MIDI USB)
-            </span>
-          )}
+                {inputs.map((dev) => (
+                  <option key={dev.id} value={dev.id} className="bg-slate-900 text-slate-200">
+                    {dev.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-xs text-amber-500 font-medium">
+                Virtual MIDI
+              </span>
+            )}
+          </div>
+
+          {/* Virtual Audio Sound Toggle */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1">
+            <button
+              onClick={onToggleAudio}
+              className={`text-xs flex items-center gap-1 transition-colors ${
+                audioEnabled ? 'text-emerald-400' : 'opacity-40 hover:opacity-80'
+              }`}
+              title={audioEnabled ? 'Sonido activado' : 'Sonido desactivado'}
+            >
+              {audioEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            </button>
+            {audioEnabled && (
+              <input
+                type="range"
+                min="0.05"
+                max="0.8"
+                step="0.05"
+                value={audioVolume}
+                onChange={(e) => onChangeAudioVolume(parseFloat(e.target.value))}
+                className="w-12 accent-emerald-400 cursor-pointer hidden sm:block"
+                title="Volumen del sintetizador"
+              />
+            )}
+          </div>
+
+          {/* Clear notes */}
+          <button
+            onClick={onClearNotes}
+            className="p-1 bg-black/20 hover:bg-black/30 border border-white/10 rounded-lg transition-colors text-slate-400 hover:text-white"
+            title="Pánico / Limpiar notas activas"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        {/* Quick Config Controls */}
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Center: Music Settings (Teclas, Key, Tema, Color) */}
+        <div className="flex flex-wrap items-center gap-2">
           
           {/* Key Count Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
-            <Sliders className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <span className="opacity-60 text-[11px]">Teclas:</span>
             <select
               value={keyCount}
               onChange={(e) => onChangeKeyCount(Number(e.target.value))}
-              className="bg-transparent text-xs font-semibold text-slate-200 focus:outline-none cursor-pointer"
+              className="bg-transparent font-semibold focus:outline-none cursor-pointer"
             >
               {Object.keys(KEYBOARD_CONFIGS).map((num) => (
                 <option key={num} value={num} className="bg-slate-900 text-slate-200">
@@ -109,12 +138,13 @@ export default function HeaderControls({
           </div>
 
           {/* Key Signature Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
-            <span className="text-slate-400 font-medium">Key:</span>
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <span className="opacity-60 text-[11px]">Key:</span>
             <select
               value={keySignature}
               onChange={(e) => onChangeKeySignature(e.target.value)}
-              className="bg-transparent text-xs font-bold text-indigo-400 focus:outline-none cursor-pointer"
+              className="bg-transparent font-bold focus:outline-none cursor-pointer"
+              style={{ color: accentColor }}
             >
               {KEY_SIGNATURES.map((sig) => (
                 <option key={sig.id} value={sig.id} className="bg-slate-900 text-slate-200">
@@ -124,80 +154,88 @@ export default function HeaderControls({
             </select>
           </div>
 
-          {/* Note Labels Toggle */}
-          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs">
-            <Tag className="w-3.5 h-3.5 text-slate-400" />
+          {/* Theme Selector */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <span className="opacity-60 text-[11px]">Tema:</span>
             <select
-              value={labelMode}
-              onChange={(e) => onChangeLabelMode(e.target.value)}
-              className="bg-transparent text-xs font-medium text-slate-200 focus:outline-none cursor-pointer"
+              value={currentThemeId}
+              onChange={(e) => onChangeTheme(e.target.value)}
+              className="bg-transparent font-semibold focus:outline-none cursor-pointer"
             >
-              <option value="c-only" className="bg-slate-900 text-slate-200">Solo Do (C1, C2...)</option>
-              <option value="all" className="bg-slate-900 text-slate-200">Todas las notas</option>
-              <option value="none" className="bg-slate-900 text-slate-200">Sin notas</option>
+              <option value="studio" className="bg-slate-900 text-slate-100">Estudio Neón</option>
+              <option value="classic" className="bg-slate-900 text-slate-100">Clásico Concierto</option>
+              <option value="jazz" className="bg-slate-900 text-slate-100">Jazz Lounge</option>
+              <option value="light" className="bg-slate-100 text-slate-900">Conservatorio Claro</option>
             </select>
           </div>
 
-          {/* Color Picker with Presets */}
-          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5">
-            <Palette className="w-3.5 h-3.5 text-slate-400" />
+          {/* Color Picker Presets */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1">
+            <Palette className="w-3.5 h-3.5 opacity-60" />
             <div className="flex items-center gap-1">
-              {COLOR_PRESETS.map((color) => (
+              {COLOR_PRESETS.slice(0, 4).map((c) => (
                 <button
-                  key={color.value}
-                  onClick={() => onChangeAccentColor(color.value)}
-                  className={`w-4 h-4 rounded-full transition-transform ${
-                    accentColor === color.value ? 'scale-125 ring-2 ring-white/60' : 'hover:scale-110 opacity-70 hover:opacity-100'
+                  key={c.value}
+                  onClick={() => onChangeAccentColor(c.value)}
+                  className={`w-3.5 h-3.5 rounded-full transition-transform ${
+                    accentColor === c.value ? 'scale-125 ring-2 ring-white/80' : 'opacity-70 hover:opacity-100'
                   }`}
-                  style={{ backgroundColor: color.value }}
-                  title={color.name}
+                  style={{ backgroundColor: c.value }}
+                  title={c.name}
                 />
               ))}
               <input
                 type="color"
                 value={accentColor}
                 onChange={(e) => onChangeAccentColor(e.target.value)}
-                className="w-5 h-5 rounded-full cursor-pointer bg-transparent border-none ml-1 p-0"
+                className="w-4 h-4 rounded-full cursor-pointer bg-transparent border-none p-0 ml-0.5"
                 title="Color personalizado"
               />
             </div>
           </div>
+        </div>
 
-          {/* Virtual Audio Sound Toggle */}
-          <div className="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2.5 py-1.5">
-            <button
-              onClick={onToggleAudio}
-              className={`text-xs flex items-center gap-1 transition-colors ${
-                audioEnabled ? 'text-emerald-400 font-semibold' : 'text-slate-500 hover:text-slate-400'
-              }`}
-              title={audioEnabled ? 'Sonido virtual activado' : 'Sonido virtual desactivado'}
+        {/* Right: Quadrant Merge Selector & Hide Navbar Button */}
+        <div className="flex items-center gap-2">
+          
+          {/* Fusión de Cuadrantes Dropdown */}
+          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+            <Grid2X2 className="w-3.5 h-3.5 opacity-60" />
+            <select
+              value={layoutMode}
+              onChange={(e) => onChangeLayoutMode(e.target.value)}
+              className="bg-transparent font-semibold focus:outline-none cursor-pointer"
+              title="Distribución y fusión de los 4 cuadrantes"
             >
-              {audioEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-              <span className="hidden md:inline">{audioEnabled ? 'Audio ON' : 'Audio OFF'}</span>
-            </button>
-            {audioEnabled && (
-              <input
-                type="range"
-                min="0.05"
-                max="0.8"
-                step="0.05"
-                value={audioVolume}
-                onChange={(e) => onChangeAudioVolume(parseFloat(e.target.value))}
-                className="w-14 accent-emerald-400 cursor-pointer hidden md:block"
-                title="Volumen del sintetizador"
-              />
-            )}
+              <option value="grid" className="bg-slate-900 text-slate-100">
+                4 Cuadrantes (2x2)
+              </option>
+              <option value="merge-bottom" className="bg-slate-900 text-slate-100">
+                2 Arriba + Fusionar Abajo
+              </option>
+              <option value="merge-top" className="bg-slate-900 text-slate-100">
+                Fusionar Arriba + 2 Abajo
+              </option>
+              <option value="merge-left" className="bg-slate-900 text-slate-100">
+                Fusionar Izquierda + 2 Derecha
+              </option>
+              <option value="merge-right" className="bg-slate-900 text-slate-100">
+                2 Izquierda + Fusionar Derecha
+              </option>
+            </select>
           </div>
 
-          {/* Panic / Clear button */}
+          {/* Ocultar Barra (Atajo: H) */}
           <button
-            onClick={onClearNotes}
-            className="p-1.5 bg-slate-950/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-xl transition-colors"
-            title="Limpiar todas las notas activas (Pánico)"
+            onClick={onHideNavbar}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold transition-all border border-white/10"
+            title="Ocultar barra de navegación (Presiona 'H' en cualquier momento para alternar)"
           >
-            <RotateCcw className="w-4 h-4" />
+            <EyeOff className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Ocultar (H)</span>
           </button>
         </div>
+
       </div>
     </header>
   );
