@@ -10,7 +10,7 @@ import {
   Columns,
   Rows
 } from 'lucide-react';
-import { KEY_SIGNATURES, COLOR_PRESETS, KEYBOARD_CONFIGS } from '../utils/musicHelpers';
+import { KEY_SIGNATURES, COLOR_PRESETS } from '../utils/musicHelpers';
 import { THEMES } from '../utils/themeConfig';
 
 export default function HeaderControls({
@@ -160,25 +160,9 @@ export default function HeaderControls({
           </button>
         </div>
 
-        {/* Center: Music Settings (Teclas, Key, Tema, Color) */}
+        {/* Center: Music Settings (Key, Tema, Color) */}
         <div className="flex flex-wrap items-center gap-2">
           
-          {/* Key Count Selector */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
-            <span className="opacity-60 text-[11px]">Teclas:</span>
-            <select
-              value={keyCount}
-              onChange={(e) => onChangeKeyCount(Number(e.target.value))}
-              className="bg-transparent font-semibold focus:outline-none cursor-pointer"
-            >
-              {Object.keys(KEYBOARD_CONFIGS).map((num) => (
-                <option key={num} value={num} className="bg-slate-900 text-slate-200">
-                  {KEYBOARD_CONFIGS[num].name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Key Signature Selector */}
           <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
             <span className="opacity-60 text-[11px]">Key:</span>

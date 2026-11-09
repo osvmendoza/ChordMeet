@@ -430,8 +430,6 @@ export default function App() {
           onSelectChannel={setSelectedChannel}
           sustainDecayTime={sustainDecayTime}
           onChangeDecayTime={setSustainDecayTime}
-          keyCount={keyCount}
-          onChangeKeyCount={setKeyCount}
           accentColor={accentColor}
           onChangeAccentColor={setAccentColor}
           keySignature={keySignature}

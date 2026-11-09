@@ -1,36 +1,12 @@
 import { Midi, Note, Key } from '@tonaljs/tonal';
 
-// Key presets configuration
+// Key presets configuration: Exclusively 61 keys (C1 to C6)
 export const KEYBOARD_CONFIGS = {
-  25: {
-    name: '25 teclas',
-    startMidi: 48, // C3
-    endMidi: 72,   // C5
-    whiteKeysCount: 15
-  },
-  49: {
-    name: '49 teclas',
-    startMidi: 36, // C2
-    endMidi: 84,   // C6
-    whiteKeysCount: 29
-  },
   61: {
     name: '61 teclas',
-    startMidi: 36, // C2
-    endMidi: 96,   // C7
+    startMidi: 36, // C1 (lowest C on 61-key piano)
+    endMidi: 96,   // C6
     whiteKeysCount: 36
-  },
-  76: {
-    name: '76 teclas',
-    startMidi: 28, // E1
-    endMidi: 103,  // G7
-    whiteKeysCount: 45
-  },
-  88: {
-    name: '88 teclas',
-    startMidi: 21, // A0
-    endMidi: 108,  // C8
-    whiteKeysCount: 52
   }
 };
 
@@ -63,9 +39,10 @@ const SHARP_NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 
 const FLAT_NOTE_NAMES  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
 // Map MIDI number to harmonic note name adhering to active key signature
+// Configured so that MIDI 36 (lowest key of 61-key keyboard) is C1
 export const midiToHarmonicNoteName = (midiNumber, keySignature = 'C') => {
   const noteInOctave = ((midiNumber % 12) + 12) % 12;
-  const octave = Math.floor(midiNumber / 12) - 1;
+  const octave = Math.floor(midiNumber / 12) - 2; // MIDI 36 = C1, MIDI 48 = C2, MIDI 60 = C3
   const isSharp = isSharpKey(keySignature);
   const pitchMap = isSharp ? SHARP_NOTE_NAMES : FLAT_NOTE_NAMES;
   let pitchClass = pitchMap[noteInOctave];
@@ -135,17 +112,17 @@ export const isBlackKey = (midiNumber) => {
   return [1, 3, 6, 8, 10].includes(noteInOctave);
 };
 
-// Generate list of all keys in a range adapted to the active key signature
-export const generateKeysInRange = (startMidi, endMidi, keySignature = 'C') => {
+// Generate list of all keys in a range adapted to 61 keys (C1 to C6) and active key signature
+export const generateKeysInRange = (startMidi = 36, endMidi = 96, keySignature = 'C') => {
   const keys = [];
   let whiteKeyIndex = 0;
 
   for (let midi = startMidi; midi <= endMidi; midi++) {
     const isBlack = isBlackKey(midi);
     const noteNameWithOctave = midiToHarmonicNoteName(midi, keySignature);
-    const octave = Math.floor(midi / 12) - 1;
-    const noteNameOnly = noteNameWithOctave.replace(/\d+/, '');
-    const isC = noteNameOnly === 'C';
+    const octave = Math.floor(midi / 12) - 2;
+    const noteNameOnly = noteNameWithOctave.replace(/^-?\d+$/, '').replace(/-?\d+$/, '');
+    const isC = ((midi % 12) + 12) % 12 === 0;
     const displayName = isC ? `C${octave}` : noteNameWithOctave;
 
     keys.push({
@@ -167,21 +144,22 @@ export const generateKeysInRange = (startMidi, endMidi, keySignature = 'C') => {
 };
 
 // Convert MIDI number to VexFlow note spec adhering to key signature
+// Middle C (MIDI 60) is c/4 in VexFlow stave notation
 export const midiToVexFlowSpec = (midiNumber, keySignature = 'C') => {
   const noteName = midiToHarmonicNoteName(midiNumber, keySignature);
   const parsed = Note.get(noteName);
   const letter = (parsed.letter || 'C').toLowerCase();
   const acc = parsed.acc || '';
-  const oct = parsed.oct !== undefined ? parsed.oct : Math.floor(midiNumber / 12) - 1;
+  const vexOctave = Math.floor(midiNumber / 12) - 1;
 
   // Key in VexFlow format: "c#/4" or "b/3"
-  const vexKey = `${letter}${acc}/${oct}`;
+  const vexKey = `${letter}${acc}/${vexOctave}`;
   return {
     midi: midiNumber,
     vexKey,
     letter,
     acc,
-    oct,
+    oct: vexOctave,
     clef: midiNumber >= 60 ? 'treble' : 'bass' // C4 (60) and above on treble, below on bass
   };
 };

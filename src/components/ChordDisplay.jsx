@@ -53,7 +53,7 @@ export default function ChordDisplay({
     if (activeNotes.length === 1) {
       const noteName = noteNamesWithOctave[0]; // e.g. "C#3"
       const parsed = Note.get(noteName);
-      const oct = parsed.oct !== undefined ? parsed.oct : (Math.floor(activeNotes[0] / 12) - 1);
+      const oct = parsed.oct !== undefined ? parsed.oct : (Math.floor(activeNotes[0] / 12) - 2);
       return {
         type: 'single-note',
         chordName: noteName,
