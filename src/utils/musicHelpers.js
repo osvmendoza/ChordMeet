@@ -51,8 +51,8 @@ export const KEY_SIGNATURES = [
 ];
 
 // Key classifications
-export const SHARP_KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#'];
-export const FLAT_KEYS = ['F', 'Bb', 'Eb', 'Ab', 'Db'];
+export const SHARP_KEYS = ['G', 'D', 'A', 'E', 'B', 'F#'];
+export const FLAT_KEYS = ['C', 'F', 'Bb', 'Eb', 'Ab', 'Db'];
 
 export const isSharpKey = (keySignature = 'C') => {
   return SHARP_KEYS.includes(keySignature);
