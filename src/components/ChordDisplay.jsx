@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Chord, Note } from '@tonaljs/tonal';
-import { Music2, Layers, Sparkles } from 'lucide-react';
-import { midiToHarmonicNoteName, harmonizeChordSymbol, KEY_SIGNATURES } from '../utils/musicHelpers';
+import { Music2, Layers } from 'lucide-react';
+import { midiToHarmonicNoteName, harmonizeChordSymbol } from '../utils/musicHelpers';
 
 // Format chord symbols: Eliminate "M" for major triads (e.g. "EM" -> "E", "CM" -> "C", "F#M" -> "F#")
 export const formatChordSymbol = (chordStr) => {
@@ -17,16 +17,9 @@ export default function ChordDisplay({
   accentColor = '#38bdf8',
   theme = null
 }) {
-  const cardBg = theme?.cardBg || 'bg-slate-900/90 border-slate-800/80 text-slate-100 shadow-xl';
-  const cardHeaderBorder = theme?.cardHeaderBorder || 'border-slate-800';
-  const subText = theme?.subText || 'text-slate-400';
   const badgeBg = theme?.badgeBg || 'bg-slate-800 text-slate-200 border-slate-700';
+  const subText = theme?.subText || 'text-slate-400';
   const isLight = theme?.mode === 'light';
-
-  const currentKeyInfo = KEY_SIGNATURES.find((k) => k.id === keySignature) || {
-    id: keySignature,
-    label: `${keySignature} Maj`
-  };
 
   // Analyze notes using Tonal.js with harmonic context of keySignature
   const analysis = useMemo(() => {
@@ -142,121 +135,78 @@ export default function ChordDisplay({
   }, [activeNotes, keySignature]);
 
   return (
-    <div className={`flex flex-col h-full rounded-2xl border p-5 transition-all duration-300 ${cardBg}`}>
-      {/* Header */}
-      <div className={`flex items-center justify-between pb-3 border-b ${cardHeaderBorder}`}>
-        <div className="flex items-center gap-2">
-          <div 
-            className="w-2.5 h-2.5 rounded-full animate-pulse"
-            style={{ backgroundColor: accentColor }}
-          />
-          <h2 className={`text-xs uppercase tracking-wider font-semibold ${subText}`}>
-            Detector Armónico
-          </h2>
+    <div className="w-full h-full flex flex-col justify-center items-center p-3 select-none overflow-hidden relative">
+      {analysis.type === 'empty' ? (
+        <div className="flex flex-col items-center justify-center py-2 text-center animate-fade-in">
+          <Music2 className={`w-10 h-10 sm:w-12 sm:h-12 mb-2 stroke-[1.5] opacity-30 animate-pulse ${subText}`} />
+          <p className="text-sm sm:text-base font-semibold opacity-70">Esperando notas MIDI...</p>
+          <p className={`text-xs mt-1 max-w-xs ${subText} opacity-50`}>
+            Toca notas en tu teclado para analizar acordes
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono opacity-60 bg-black/20 px-2 py-0.5 rounded border border-white/5">
-            Tonalidad: {currentKeyInfo.label}
-          </span>
-          <span 
-            className="text-xs font-mono px-2 py-0.5 rounded-md border"
-            style={{ borderColor: `${accentColor}40`, color: accentColor }}
-          >
-            {activeNotes.length} {activeNotes.length === 1 ? 'nota activa' : 'notas activas'}
-          </span>
-        </div>
-      </div>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col justify-center items-center py-6 text-center">
-        {analysis.type === 'empty' ? (
-          <div className="flex flex-col items-center justify-center py-4">
-            <Music2 className={`w-12 h-12 mb-3 stroke-[1.5] opacity-40 animate-pulse ${subText}`} />
-            <p className="text-sm font-medium opacity-80">Esperando notas MIDI...</p>
-            <p className={`text-xs mt-1 max-w-xs ${subText}`}>
-              Toca notas en tu teclado o haz clic en las teclas del piano para ver el acorde
-            </p>
+      ) : (
+        <div className="w-full h-full flex flex-col justify-center items-center text-center gap-1.5 sm:gap-2.5 py-1">
+          {/* Main Chord Name - Fluid scaling to fit any zoom or container size */}
+          <div className="relative inline-block max-w-full">
+            <h1 
+              className="font-black tracking-tight font-mono transition-all duration-150 drop-shadow-md select-none truncate"
+              style={{ 
+                color: isLight ? '#0f172a' : '#ffffff',
+                textShadow: `0 0 20px ${accentColor}88, 0 0 40px ${accentColor}44`,
+                fontSize: 'clamp(2.5rem, min(8vw, 13vh), 5.5rem)',
+                lineHeight: 1.1
+              }}
+            >
+              {analysis.chordName}
+            </h1>
           </div>
-        ) : (
-          <div className="w-full flex flex-col items-center">
-            {/* Chord Name / Main Title */}
-            <div className="relative inline-block mb-2">
-              <h1 
-                className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight font-mono transition-all duration-150 drop-shadow-md"
-                style={{ 
-                  color: isLight ? '#0f172a' : '#ffffff',
-                  textShadow: `0 0 20px ${accentColor}88, 0 0 35px ${accentColor}44`
-                }}
-              >
-                {analysis.chordName}
-              </h1>
-            </div>
 
-            {/* Subtitle / Interval description */}
-            {analysis.subtitle && (
-              <span className={`text-sm font-medium mt-1 ${subText}`}>
-                {analysis.subtitle}
-              </span>
-            )}
-            {analysis.noteDetail && (
-              <span className={`text-sm font-medium mt-1 ${subText}`}>
-                {analysis.noteDetail}
-              </span>
-            )}
+          {/* Subtitle / Interval description */}
+          {(analysis.subtitle || analysis.noteDetail) && (
+            <span className={`text-xs sm:text-sm font-medium tracking-wide ${subText} opacity-80`}>
+              {analysis.subtitle || analysis.noteDetail}
+            </span>
+          )}
 
-            {/* Active Notes Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-4 max-w-md">
-              {analysis.notes.map((n, idx) => {
-                const isBass = idx === 0 && analysis.notes.length > 1;
-                return (
-                  <span
-                    key={`${n}-${idx}`}
-                    className={`px-3 py-1 text-xs font-mono font-bold rounded-lg border transition-all duration-150 ${
-                      isBass
-                        ? 'bg-amber-500/20 text-amber-500 border-amber-500/50 shadow-sm'
-                        : badgeBg
-                    }`}
+          {/* Active Notes Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 max-w-md mt-0.5">
+            {analysis.notes.map((n, idx) => {
+              const isBass = idx === 0 && analysis.notes.length > 1;
+              return (
+                <span
+                  key={`${n}-${idx}`}
+                  className={`px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-mono font-bold rounded-lg border transition-all shadow-sm ${
+                    isBass
+                      ? 'bg-amber-500/20 text-amber-500 border-amber-500/50'
+                      : badgeBg
+                  }`}
+                >
+                  {n}
+                  {isBass && <span className="text-[10px] ml-1 opacity-80 font-normal">(Bajo)</span>}
+                </span>
+              );
+            })}
+          </div>
+
+          {/* Alternative interpretations if any */}
+          {analysis.alternatives.length > 0 && (
+            <div className={`mt-1 flex items-center justify-center gap-1.5 text-xs ${subText} opacity-70 flex-wrap`}>
+              <Layers className="w-3 h-3 opacity-60" />
+              <span className="text-[11px]">Otras:</span>
+              <div className="flex gap-1 flex-wrap">
+                {analysis.alternatives.map((alt, i) => (
+                  <span 
+                    key={i} 
+                    className={`px-2 py-0.5 rounded font-mono text-[11px] border ${badgeBg}`}
                   >
-                    {n}
-                    {isBass && <span className="text-[10px] ml-1 opacity-80 font-normal">(Bajo)</span>}
+                    {alt}
                   </span>
-                );
-              })}
-            </div>
-
-            {/* Alternative interpretations if any */}
-            {analysis.alternatives.length > 0 && (
-              <div className={`mt-4 pt-3 border-t ${cardHeaderBorder} w-full flex items-center justify-center gap-2 text-xs ${subText}`}>
-                <Layers className="w-3.5 h-3.5 opacity-60" />
-                <span>Otras lecturas:</span>
-                <div className="flex gap-1.5 flex-wrap">
-                  {analysis.alternatives.map((alt, i) => (
-                    <span 
-                      key={i} 
-                      className={`px-2 py-0.5 rounded font-mono border ${badgeBg}`}
-                    >
-                      {alt}
-                    </span>
-                  ))}
-                </div>
+                ))}
               </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer Info */}
-      <div className={`pt-3 border-t ${cardHeaderBorder} flex items-center justify-between text-[11px] ${subText}`}>
-        <span className="flex items-center gap-1.5">
-          <Sparkles className="w-3 h-3" style={{ color: accentColor }} />
-          Motor armónico: Tonal.js
-        </span>
-        {analysis.bassNote && (
-          <span className="font-mono">
-            Bajo fundamental: <strong className="opacity-100 font-bold">{analysis.bassNote}</strong>
-          </span>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

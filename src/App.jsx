@@ -333,7 +333,7 @@ export default function App() {
 
       case 'staff':
         return (
-          <div className="w-full h-full p-1.5 overflow-auto">
+          <div className="w-full h-full overflow-hidden flex items-center justify-center">
             <Staff
               activeNotes={allAudibleNotes}
               keySignature={keySignature}
@@ -345,7 +345,7 @@ export default function App() {
 
       case 'chords':
         return (
-          <div className="w-full h-full p-1.5 overflow-auto">
+          <div className="w-full h-full overflow-hidden flex items-center justify-center">
             <ChordDisplay
               activeNotes={allAudibleNotes}
               keySignature={keySignature}
