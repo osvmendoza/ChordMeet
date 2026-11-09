@@ -3,12 +3,48 @@ import { Chord, Note } from '@tonaljs/tonal';
 import { Music2, Layers } from 'lucide-react';
 import { midiToHarmonicNoteName, harmonizeChordSymbol } from '../utils/musicHelpers';
 
-// Format chord symbols: Eliminate "M" for major triads (e.g. "EM" -> "E", "CM" -> "C", "F#M" -> "F#")
+// Format chord symbols:
+// 1. Eliminate "M" for major chords (e.g. "CM" -> "C", "CMadd9" -> "Cadd9", "CM/G" -> "C / G")
+// 2. Format minor chords with "-" (e.g. "Cm" -> "C-", "Em9" -> "E-9", "Cm7" -> "C-7")
 export const formatChordSymbol = (chordStr) => {
   if (!chordStr) return '';
-  const parts = chordStr.split(' / ');
-  const cleanMain = parts[0].replace(/^([A-G][b#]?)M$/, '$1');
-  return parts.length > 1 ? `${cleanMain} / ${parts[1]}` : cleanMain;
+
+  const slashMatch = chordStr.match(/^(.*?)\s*\/\s*([A-G][b#]?)$/);
+  let main = slashMatch ? slashMatch[1] : chordStr;
+  let bass = slashMatch ? slashMatch[2] : null;
+
+  // Handle minor-major 7 notation (e.g. "Cm/ma7" -> "C-(maj7)")
+  main = main.replace(/m\/maj?7/g, '-(maj7)');
+
+  // Remove redundant 'M' from major chords (e.g. CM -> C, CMadd9 -> Cadd9, CM6 -> C6, but maj7/maj9 preserved)
+  main = main.replace(/^([A-G][b#]?)M(?!aj)/, '$1');
+
+  // Replace 'm' with '-' for minor chords (e.g. Cm -> C-, Em9 -> E-9, Cm7 -> C-7, Em#5 -> E-#5)
+  main = main.replace(/^([A-G][b#]?)m(?!aj)/, '$1-');
+
+  if (bass) {
+    bass = bass.replace(/^([A-G][b#]?)M(?!aj)/, '$1');
+    return `${main} / ${bass}`;
+  }
+
+  return main;
+};
+
+// Prioritize standard triad inversions over augmented (#5) interpretations
+// E.g., when playing E G C, prioritize C / E rather than Em#5, keeping Em#5 in alternatives
+export const prioritizeChords = (detectedChords) => {
+  if (!detectedChords || detectedChords.length <= 1) return detectedChords;
+
+  if (detectedChords[0].includes('#5')) {
+    const betterIndex = detectedChords.findIndex((chord) => !chord.includes('#5'));
+    if (betterIndex > 0) {
+      const copy = [...detectedChords];
+      const [promoted] = copy.splice(betterIndex, 1);
+      copy.unshift(promoted);
+      return copy;
+    }
+  }
+  return detectedChords;
 };
 
 export default function ChordDisplay({ 
@@ -65,19 +101,21 @@ export default function ChordDisplay({
       };
     }
 
-    // Detect chords with Tonal
-    const detectedChords = Chord.detect(uniquePitchClasses);
+    // Detect chords with Tonal and prioritize inversions over augmented (#5) chords
+    const rawDetectedChords = Chord.detect(uniquePitchClasses);
+    const detectedChords = prioritizeChords(rawDetectedChords);
     let rawPrimaryChord = detectedChords[0] || null;
     let alternatives = detectedChords.slice(1);
 
     if (rawPrimaryChord) {
-      const chordInfo = Chord.get(rawPrimaryChord);
+      const baseChordName = rawPrimaryChord.includes('/') ? rawPrimaryChord.split('/')[0] : rawPrimaryChord;
+      const chordInfo = Chord.get(baseChordName);
       let formattedPrimary = formatChordSymbol(rawPrimaryChord);
       formattedPrimary = harmonizeChordSymbol(formattedPrimary, keySignature);
 
-      // Check if bass note is not the root of the detected chord
+      // Check if bass note is not the root of the detected chord and chord isn't already a slash chord
       const harmonizedTonic = chordInfo.tonic ? harmonizeChordSymbol(chordInfo.tonic, keySignature) : null;
-      if (harmonizedTonic && harmonizedTonic !== bassPitchClass) {
+      if (harmonizedTonic && harmonizedTonic !== bassPitchClass && !formattedPrimary.includes('/')) {
         formattedPrimary = `${formattedPrimary} / ${bassPitchClass}`;
       }
 

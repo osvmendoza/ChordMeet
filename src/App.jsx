@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import HeaderControls from './components/HeaderControls';
 import QuadrantContainer from './components/QuadrantContainer';
-import ChordDisplay, { formatChordSymbol } from './components/ChordDisplay';
+import ChordDisplay, { formatChordSymbol, prioritizeChords } from './components/ChordDisplay';
 import Staff from './components/Staff';
 import Keyboard from './components/Keyboard';
 import SustainPedal from './components/SustainPedal';
@@ -112,10 +112,23 @@ export default function App() {
     if (allAudibleNotes.length >= 2) {
       const noteNames = allAudibleNotes.map((m) => midiToHarmonicNoteName(m, keySignature));
       const pitchClasses = noteNames.map((n) => n.replace(/\d+/, ''));
-      const detected = Chord.detect(Array.from(new Set(pitchClasses)));
+      const rawDetected = Chord.detect(Array.from(new Set(pitchClasses)));
+      const detected = prioritizeChords(rawDetected);
       if (detected.length > 0) {
-        let chordName = formatChordSymbol(detected[0]);
+        const rawChord = detected[0];
+        const baseChordName = rawChord.includes('/') ? rawChord.split('/')[0] : rawChord;
+        const chordInfo = Chord.get(baseChordName);
+        let chordName = formatChordSymbol(rawChord);
         chordName = harmonizeChordSymbol(chordName, keySignature);
+
+        // Check if bass note is not the root of the detected chord and chord isn't already a slash chord
+        const lowestMidi = allAudibleNotes[0];
+        const bassPitchClass = midiToHarmonicNoteName(lowestMidi, keySignature).replace(/\d+/, '');
+        const harmonizedTonic = chordInfo.tonic ? harmonizeChordSymbol(chordInfo.tonic, keySignature) : null;
+        if (harmonizedTonic && harmonizedTonic !== bassPitchClass && !chordName.includes('/')) {
+          chordName = `${chordName} / ${bassPitchClass}`;
+        }
+
         setChordHistory((prev) => {
           if (prev.length > 0 && prev[prev.length - 1].chord === chordName) {
             return prev;
