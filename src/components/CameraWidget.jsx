@@ -3,6 +3,7 @@ import {
   Video, 
   VideoOff, 
   FlipHorizontal, 
+  RotateCw,
   Maximize2, 
   Minimize2, 
   RefreshCw, 
@@ -21,6 +22,8 @@ export default function CameraWidget({
 }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const containerRef = useRef(null);
+  const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
 
   // Load preferences from localStorage if previously configured
   const [devices, setDevices] = useState([]);
@@ -30,6 +33,10 @@ export default function CameraWidget({
   const [isMirrored, setIsMirrored] = useState(() => {
     const saved = localStorage.getItem(`chordmeet_camera_${instanceId}_mirrored`);
     return saved !== null ? saved === 'true' : defaultMirrored;
+  });
+  const [rotation, setRotation] = useState(() => {
+    const saved = localStorage.getItem(`chordmeet_camera_${instanceId}_rotation`);
+    return saved !== null ? parseInt(saved, 10) : 0;
   });
   const [fitMode, setFitMode] = useState(() => {
     return localStorage.getItem(`chordmeet_camera_${instanceId}_fit`) || defaultFit;
@@ -41,6 +48,23 @@ export default function CameraWidget({
 
   const isLight = theme?.mode === 'light';
   const badgeBg = theme?.badgeBg || (isLight ? 'bg-white/90 text-slate-800 border-slate-300' : 'bg-slate-900/90 text-slate-100 border-slate-700/80');
+
+  // Track container dimensions to scale properly during 90/270 deg vertical rotation
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateSize = () => {
+      if (containerRef.current) {
+        setContainerSize({
+          w: containerRef.current.clientWidth,
+          h: containerRef.current.clientHeight
+        });
+      }
+    };
+    updateSize();
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Enumerate video devices
   const updateDeviceList = useCallback(async () => {
@@ -136,6 +160,15 @@ export default function CameraWidget({
     });
   };
 
+  // Rotate 90 degrees clockwise (0 -> 90 -> 180 -> 270 -> 0)
+  const handleRotate = () => {
+    setRotation((prev) => {
+      const next = (prev + 90) % 360;
+      localStorage.setItem(`chordmeet_camera_${instanceId}_rotation`, String(next));
+      return next;
+    });
+  };
+
   // Toggle fit mode (cover vs contain)
   const handleToggleFit = () => {
     setFitMode((prev) => {
@@ -143,6 +176,17 @@ export default function CameraWidget({
       localStorage.setItem(`chordmeet_camera_${instanceId}_fit`, next);
       return next;
     });
+  };
+
+  // Calculate 2D transform scale and rotation
+  const getTransform = () => {
+    const isVertical = rotation === 90 || rotation === 270;
+    let scale = 1;
+    const { w, h } = containerSize;
+    if (isVertical && w > 0 && h > 0) {
+      scale = fitMode === 'contain' ? Math.min(w / h, h / w) : Math.max(w / h, h / w);
+    }
+    return `scale(${scale.toFixed(4)}) rotate(${rotation}deg) scaleX(${isMirrored ? -1 : 1})`;
   };
 
   // Toggle enabled/disabled
@@ -197,6 +241,7 @@ export default function CameraWidget({
 
   return (
     <div 
+      ref={containerRef}
       className="relative w-full h-full bg-slate-950 overflow-hidden select-none flex items-center justify-center group"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -211,7 +256,7 @@ export default function CameraWidget({
           isStreaming ? 'opacity-100' : 'opacity-0'
         }`}
         style={{
-          transform: isMirrored ? 'scaleX(-1)' : 'none',
+          transform: getTransform(),
           objectFit: fitMode
         }}
       />
@@ -302,6 +347,19 @@ export default function CameraWidget({
             <FlipHorizontal className="w-3.5 h-3.5" />
           </button>
 
+          {/* Rotate Toggle Button */}
+          <button
+            onClick={handleRotate}
+            className={`p-1.5 rounded-lg border shadow-lg backdrop-blur-md transition-all ${
+              rotation !== 0
+                ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/50'
+                : 'bg-slate-900/80 text-slate-400 border-slate-700/80 hover:text-slate-200'
+            }`}
+            title={`Rotar orientación: ${rotation}° (clic para girar 90°)`}
+          >
+            <RotateCw className="w-3.5 h-3.5" />
+          </button>
+
           {/* Fit Mode Toggle Button */}
           <button
             onClick={handleToggleFit}
@@ -340,7 +398,7 @@ export default function CameraWidget({
           }`}
         >
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/60 text-slate-300 border border-white/10 backdrop-blur-sm">
-            {isMirrored ? 'Espejo' : 'Real'} • {fitMode === 'cover' ? 'Llenar' : '16:9'}
+            {rotation !== 0 ? `${rotation}° • ` : ''}{isMirrored ? 'Espejo' : 'Real'} • {fitMode === 'cover' ? 'Llenar' : '16:9'}
           </span>
         </div>
       )}
