@@ -44,12 +44,12 @@ export default function QuadrantContainer({
   const IconComponent = currentOption.icon;
 
   const isLight = theme?.mode === 'light';
-  const cardBg = isLight 
-    ? 'bg-white border-slate-300 text-slate-800' 
-    : 'bg-slate-900/90 border-slate-800/80 text-slate-100';
-  const headerBg = isLight 
+  const cardBg = theme?.cardBg || (isLight 
+    ? 'bg-white border-slate-300 text-slate-800 shadow-md' 
+    : 'bg-slate-900/90 border-slate-800/80 text-slate-100 shadow-xl');
+  const headerBg = theme?.cardHeaderBg || theme?.headerBg || (isLight 
     ? 'bg-slate-100/90 border-slate-300' 
-    : 'bg-slate-950/80 border-slate-800/80';
+    : 'bg-slate-950/80 border-slate-800/80');
 
   const handleDragStart = (e) => {
     e.dataTransfer.setData('text/plain', widgetId);
@@ -98,7 +98,11 @@ export default function QuadrantContainer({
 
           {dropdownOpen && (
             <div 
-              className="absolute right-0 mt-1 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl py-1 z-50 text-slate-200 text-xs"
+              className={`absolute right-0 mt-1 w-48 border rounded-lg shadow-2xl py-1 z-50 text-xs backdrop-blur-md ${
+                isLight 
+                  ? 'bg-white border-slate-300 text-slate-800' 
+                  : (theme?.cardBg || 'bg-slate-900 border-slate-700 text-slate-200')
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">

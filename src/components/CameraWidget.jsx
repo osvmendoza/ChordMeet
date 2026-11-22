@@ -40,7 +40,7 @@ export default function CameraWidget({
   const [isHovered, setIsHovered] = useState(false);
 
   const isLight = theme?.mode === 'light';
-  const badgeBg = isLight ? 'bg-white/90 text-slate-800 border-slate-300' : 'bg-slate-900/90 text-slate-100 border-slate-700/80';
+  const badgeBg = theme?.badgeBg || (isLight ? 'bg-white/90 text-slate-800 border-slate-300' : 'bg-slate-900/90 text-slate-100 border-slate-700/80');
 
   // Enumerate video devices
   const updateDeviceList = useCallback(async () => {

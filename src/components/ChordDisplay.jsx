@@ -215,7 +215,7 @@ export default function ChordDisplay({
                   key={`${n}-${idx}`}
                   className={`px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-mono font-bold rounded-lg border transition-all shadow-sm ${
                     isBass
-                      ? 'bg-amber-500/20 text-amber-500 border-amber-500/50'
+                      ? (theme?.bassBadge || 'bg-amber-500/20 text-amber-500 border-amber-500/50')
                       : badgeBg
                   }`}
                 >

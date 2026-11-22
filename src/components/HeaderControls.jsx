@@ -55,6 +55,7 @@ export default function HeaderControls({
   onHideNavbar
 }) {
   const headerBg = theme?.headerBg || 'bg-slate-900/95 border-slate-800 text-white';
+  const pillBg = theme?.navbarPillBg || '${pillBg}';
 
   return (
     <header className={`backdrop-blur-md border-b px-3 py-1.5 z-40 shadow-sm transition-colors duration-200 select-none ${headerBg}`}>
@@ -63,7 +64,7 @@ export default function HeaderControls({
         {/* Left: MIDI Device & Quick Audio */}
         <div className="flex items-center gap-2">
           {/* MIDI Connection Status & Selector */}
-          <div className="flex items-center gap-1.5 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1.5 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <Usb className={`w-3.5 h-3.5 ${inputs.length > 0 ? 'text-emerald-400' : 'text-slate-500'}`} />
             {inputs.length > 0 ? (
               <select
@@ -88,7 +89,7 @@ export default function HeaderControls({
           </div>
 
           {/* MIDI Channel Filter (Channel 1, All, etc.) */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <span className="opacity-60 text-[11px]">Canal:</span>
             <select
               value={selectedChannel}
@@ -107,7 +108,7 @@ export default function HeaderControls({
           </div>
 
           {/* Natural Acoustic Piano Decay Time Selector */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <span className="opacity-60 text-[11px]">Decaimiento:</span>
             <select
               value={sustainDecayTime}
@@ -126,7 +127,7 @@ export default function HeaderControls({
           </div>
 
           {/* Virtual Audio Sound Toggle */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1">
             <button
               onClick={onToggleAudio}
               className={`text-xs flex items-center gap-1 transition-colors ${
@@ -164,7 +165,7 @@ export default function HeaderControls({
         <div className="flex flex-wrap items-center gap-2">
           
           {/* Key Signature Selector */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <span className="opacity-60 text-[11px]">Key:</span>
             <select
               value={keySignature}
@@ -181,7 +182,7 @@ export default function HeaderControls({
           </div>
 
           {/* Theme Selector */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <span className="opacity-60 text-[11px]">Tema:</span>
             <select
               value={currentThemeId}
@@ -196,7 +197,7 @@ export default function HeaderControls({
           </div>
 
           {/* Color Picker Presets */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1">
             <Palette className="w-3.5 h-3.5 opacity-60" />
             <div className="flex items-center gap-1">
               {COLOR_PRESETS.slice(0, 4).map((c) => (
@@ -225,7 +226,7 @@ export default function HeaderControls({
         <div className="flex items-center gap-2">
           
           {/* Fusión de Cuadrantes Dropdown */}
-          <div className="flex items-center gap-1 bg-black/20 border border-white/10 rounded-lg px-2 py-1 text-xs">
+          <div className="flex items-center gap-1 ${pillBg} rounded-lg px-2 py-1 text-xs">
             <Grid2X2 className="w-3.5 h-3.5 opacity-60" />
             <select
               value={layoutMode}

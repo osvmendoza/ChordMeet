@@ -168,7 +168,7 @@ export default function Keyboard({
                     {isMiddleC && !inScale && (
                       <div 
                         className="w-1.5 h-1.5 rounded-full mb-1 z-10"
-                        style={{ backgroundColor: isPressed ? '#ffffff' : '#64748b' }}
+                        style={{ backgroundColor: isPressed ? '#ffffff' : (theme?.middleCDot || '#64748b') }}
                         title="Do Central (C4)"
                       />
                     )}
@@ -182,7 +182,7 @@ export default function Keyboard({
                             : isSustained
                               ? 'text-slate-900 font-bold'
                               : k.isC
-                                ? 'text-indigo-600 font-extrabold'
+                                ? (theme?.cKeyColor || 'text-indigo-600 font-extrabold')
                                 : whiteKeyText
                         }`}
                       >
