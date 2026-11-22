@@ -8,6 +8,7 @@ import SustainPedal from './components/SustainPedal';
 import ChordHistory from './components/ChordHistory';
 import Metronome from './components/Metronome';
 import MidiRecorder from './components/MidiRecorder';
+import CameraWidget from './components/CameraWidget';
 
 import { useWebMidi } from './hooks/useWebMidi';
 import { synth } from './utils/audioSynth';
@@ -394,6 +395,36 @@ export default function App() {
               activeNotes={activeNotes}
               onTriggerNoteOn={triggerNoteOn}
               onTriggerNoteOff={triggerNoteOff}
+              accentColor={accentColor}
+              theme={activeTheme}
+            />
+          </div>
+        );
+
+      case 'camera1':
+        return (
+          <div className="w-full h-full overflow-hidden">
+            <CameraWidget
+              instanceId="cam1"
+              title="Cámara 1 (Rostro)"
+              defaultMirrored={true}
+              defaultDeviceIndex={0}
+              defaultFit="cover"
+              accentColor={accentColor}
+              theme={activeTheme}
+            />
+          </div>
+        );
+
+      case 'camera2':
+        return (
+          <div className="w-full h-full overflow-hidden">
+            <CameraWidget
+              instanceId="cam2"
+              title="Cámara 2 (Manos)"
+              defaultMirrored={false}
+              defaultDeviceIndex={1}
+              defaultFit="contain"
               accentColor={accentColor}
               theme={activeTheme}
             />

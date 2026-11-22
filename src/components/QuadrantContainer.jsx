@@ -10,13 +10,17 @@ import {
   GripHorizontal,
   ChevronDown,
   Layers,
-  Sparkles
+  Sparkles,
+  Video,
+  Camera
 } from 'lucide-react';
 
 export const WIDGET_OPTIONS = [
   { id: 'keyboard', name: 'Teclado Interactivo', icon: Piano },
   { id: 'staff', name: 'Pentagrama (Grand Staff)', icon: BookOpen },
   { id: 'chords', name: 'Detector de Acordes', icon: Music },
+  { id: 'camera1', name: 'Cámara 1 (Rostro)', icon: Video },
+  { id: 'camera2', name: 'Cámara 2 (Manos)', icon: Camera },
   { id: 'metronome', name: 'Metrónomo Digital', icon: Timer },
   { id: 'history', name: 'Progresión Armónica', icon: History },
   { id: 'recorder', name: 'Grabadora y Looper MIDI', icon: Circle },
