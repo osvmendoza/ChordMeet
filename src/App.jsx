@@ -303,7 +303,7 @@ export default function App() {
   };
 
   // Render widget inside any quadrant
-  const renderWidgetContent = (widgetId) => {
+  const renderWidgetContent = (widgetId, quadrantId = 'q1') => {
     switch (widgetId) {
       case 'keyboard':
         return (
@@ -401,30 +401,17 @@ export default function App() {
           </div>
         );
 
+      case 'camera':
       case 'camera1':
-        return (
-          <div className="w-full h-full overflow-hidden">
-            <CameraWidget
-              instanceId="cam1"
-              title="Cámara 1 (Rostro)"
-              defaultMirrored={true}
-              defaultDeviceIndex={0}
-              defaultFit="cover"
-              accentColor={accentColor}
-              theme={activeTheme}
-            />
-          </div>
-        );
-
       case 'camera2':
         return (
           <div className="w-full h-full overflow-hidden">
             <CameraWidget
-              instanceId="cam2"
-              title="Cámara 2 (Manos)"
-              defaultMirrored={false}
-              defaultDeviceIndex={1}
-              defaultFit="contain"
+              instanceId={quadrantId || 'cam'}
+              title="Cámara de Video"
+              defaultMirrored={quadrantId === 'q1'}
+              defaultDeviceIndex={quadrantId === 'q2' || quadrantId === 'q3' ? 1 : 0}
+              defaultFit="cover"
               accentColor={accentColor}
               theme={activeTheme}
             />
@@ -456,7 +443,7 @@ export default function App() {
         accentColor={accentColor}
         theme={activeTheme}
       >
-        {renderWidgetContent(quadrants[qId])}
+        {renderWidgetContent(quadrants[qId], qId)}
       </QuadrantContainer>
     </div>
   );

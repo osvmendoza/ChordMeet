@@ -37,7 +37,7 @@ export default function CameraWidget({
   const [isEnabled, setIsEnabled] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
-  const [showControls, setShowControls] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   const isLight = theme?.mode === 'light';
   const badgeBg = isLight ? 'bg-white/90 text-slate-800 border-slate-300' : 'bg-slate-900/90 text-slate-100 border-slate-700/80';
@@ -198,7 +198,8 @@ export default function CameraWidget({
   return (
     <div 
       className="relative w-full h-full bg-slate-950 overflow-hidden select-none flex items-center justify-center group"
-      onMouseEnter={() => setShowControls(true)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Active Video Player */}
       <video
@@ -255,10 +256,12 @@ export default function CameraWidget({
         </div>
       )}
 
-      {/* Top Floating Controls Bar */}
+      {/* Top Floating Controls Bar - Displayed strictly on cursor hover */}
       <div 
-        className={`absolute top-2 left-2 right-2 flex items-center justify-between gap-1.5 z-20 transition-opacity duration-200 ${
-          showControls ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+        className={`absolute top-2 left-2 right-2 flex items-center justify-between gap-1.5 z-20 transition-all duration-200 ${
+          isHovered
+            ? 'opacity-100 translate-y-0 pointer-events-auto' 
+            : 'opacity-0 -translate-y-2 pointer-events-none'
         }`}
       >
         {/* Device Selector Pill */}
@@ -327,9 +330,15 @@ export default function CameraWidget({
         </div>
       </div>
 
-      {/* Bottom Subtle Status Pill */}
+      {/* Bottom Subtle Status Pill - Displayed strictly on cursor hover */}
       {isStreaming && (
-        <div className="absolute bottom-2 right-2 pointer-events-none opacity-60 group-hover:opacity-90 transition-opacity">
+        <div 
+          className={`absolute bottom-2 right-2 pointer-events-none transition-all duration-200 ${
+            isHovered
+              ? 'opacity-70 translate-y-0' 
+              : 'opacity-0 translate-y-2'
+          }`}
+        >
           <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-black/60 text-slate-300 border border-white/10 backdrop-blur-sm">
             {isMirrored ? 'Espejo' : 'Real'} • {fitMode === 'cover' ? 'Llenar' : '16:9'}
           </span>
