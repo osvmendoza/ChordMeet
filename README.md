@@ -1,6 +1,6 @@
 # 🎹 ChordMeet — Estación Visual y Teórica de Piano en Tiempo Real
 
-> **Suite interactiva de análisis armónico, notación en pentagrama (Grand Staff) y visualización de teclado en tiempo real vía Web MIDI.** Diseñada para pianistas, estudiantes de armonía moderna, docentes musicales, productores y creadores de contenido.
+> **Suite interactiva de análisis armónico, notación en pentagrama (Grand Staff), visualización de teclado y monitoreo multicámara en tiempo real vía Web MIDI y WebRTC.** Diseñada para pianistas, estudiantes de armonía moderna, docentes musicales, productores y creadores de contenido.
 
 ---
 
@@ -8,67 +8,74 @@
 1. [Visión General y Misión](#-visión-general-y-misión)
 2. [Arquitectura del Sistema](#-arquitectura-del-sistema)
 3. [Alcance y Características Principales](#-alcance-y-características-principales)
-   - [Diseño Modular en 4 Cuadrantes y Fusión](#1-diseño-modular-en-4-cuadrantes-y-fusión-de-paneles)
-   - [Motor Armónico y Detección de Acordes](#2-motor-armónico-y-detección-de-acordes-inteligente)
-   - [Pentagrama en Tiempo Real (Grand Staff)](#3-pentagrama-en-tiempo-real-grand-staff-vexflow-4)
-   - [Teclado Interactivo de 61 Teclas](#4-teclado-interactivo-de-61-teclas-c1-a-c6)
-   - [Simulación Física Acústica del Pedal de Sustain](#5-simulación-física-acústica-del-pedal-de-sustain-cc-64)
-   - [Herramientas de Práctica (Metrónomo, Grabadora, Historial)](#6-herramientas-integradas-de-práctica-y-producción)
-   - [Sintetizador Web Audio Polifónico](#7-sintetizador-web-audio-polifónico-incorporado)
-4. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
-5. [Estructura del Proyecto](#-estructura-del-proyecto)
-6. [Guía de Uso y Atajos de Teclado](#-guía-de-uso-y-atajos-de-teclado)
-7. [Límites Actuales del Proyecto](#-límites-actuales-del-proyecto)
-8. [Escalabilidad y Roadmap Futuro](#-escalabilidad-y-roadmap-futuro)
-9. [Instalación y Despliegue](#-instalación-y-despliegue)
-10. [Licencia](#-licencia)
+   - [1. Diseño Modular en 4 Cuadrantes y Fusión de Paneles](#1-diseño-modular-en-4-cuadrantes-y-fusión-de-paneles)
+   - [2. Motor Armónico y Detección de Acordes Inteligente](#2-motor-armónico-y-detección-de-acordes-inteligente)
+   - [3. Pentagrama en Tiempo Real (Grand Staff con VexFlow 4)](#3-pentagrama-en-tiempo-real-grand-staff-con-vexflow-4)
+   - [4. Teclado Interactivo de 61 Teclas (C1 a C6)](#4-teclado-interactivo-de-61-teclas-c1-a-c6)
+   - [5. Módulo de Cámara de Video (Cámaras Web en Tiempo Real)](#5-módulo-de-cámara-de-video-cámaras-web-en-tiempo-real)
+   - [6. Simulación Física Acústica del Pedal de Sustain (CC 64)](#6-simulación-física-acústica-del-pedal-de-sustain-cc-64)
+   - [7. Herramientas Integradas de Práctica y Producción](#7-herramientas-integradas-de-práctica-y-producción)
+   - [8. Sintetizador Web Audio Polifónico Incorporado](#8-sintetizador-web-audio-polifónico-incorporado)
+4. [Temas Visuales Calibrados y Modo Minimalista](#-temas-visuales-calibrados-y-modo-minimalista)
+5. [Tecnologías Utilizadas](#-tecnologías-utilizadas)
+6. [Estructura del Proyecto](#-estructura-del-proyecto)
+7. [Guía de Uso y Atajos de Teclado](#-guía-de-uso-y-atajos-de-teclado)
+8. [Límites Actuales del Proyecto](#-límites-actuales-del-proyecto)
+9. [Escalabilidad y Roadmap Futuro](#-escalabilidad-y-roadmap-futuro)
+10. [Instalación y Despliegue](#-instalación-y-despliegue)
+11. [Licencia](#-licencia)
 
 ---
 
 ## 🎯 Visión General y Misión
 
 ### ¿Qué es ChordMeet?
-**ChordMeet** es una aplicación web de alto rendimiento que conecta un teclado MIDI físico (o virtual) con una interfaz de retroalimentación musical instantánea y sin latencia perceptible. Integra en una misma pantalla sincronizada:
-- Identificación de acordes en tiempo real con nomenclatura moderna.
-- Grabado de partitura profesional en doble pentagrama (Clave de Sol y Fa).
-- Representación visual del teclado de 5 octavas con iluminación diferenciada.
-- Simulación acústica del comportamiento de apagadores y resonancia del pedal de sustain.
+**ChordMeet** es una aplicación web de alto rendimiento que conecta un teclado MIDI físico (o virtual) y dispositivos de video en una sola interfaz sincronizada y sin latencia perceptible. Integra en una misma pantalla modular:
+- Identificación de acordes en tiempo real con armonización enarmónica y estándar contemporáneo.
+- Grabado de partitura profesional en doble pentagrama (Clave de Sol y Fa con VexFlow 4).
+- Representación visual del teclado de 5 octavas (61 teclas) con iluminación orgánica diferenciada.
+- Módulo de cámara WebRTC con rotación en 90°, modo espejo y controles discretos por cursor (*hover-only*).
+- Simulación acústica del comportamiento físico de apagadores y resonancia del pedal de sustain.
+- Suite de metrónomo digital, grabador/looper MIDI e historial de progresiones.
 
 ### Misión
-Democratizar y clarificar el aprendizaje y la enseñanza de la armonía contemporánea y el piano clásico/jazz. ChordMeet busca eliminar la fricción entre la ejecución táctil en el instrumento y su comprensión conceptual abstracta (notación musical, inversiones, extensiones armónicas y funciones tonales), ofreciendo un entorno visual minimalista, libre de distracciones y personalizable para clases presenciales, streaming educativo o práctica personal en estudio.
+Democratizar y clarificar el aprendizaje y la enseñanza de la armonía contemporánea y el piano clásico/jazz. ChordMeet busca eliminar la fricción entre la ejecución táctil en el instrumento y su comprensión conceptual abstracta (notación musical, inversiones, extensiones armónicas y funciones tonales), ofreciendo un entorno visual minimalista, libre de distracciones y personalizable para clases presenciales, transmisiones educativas (OBS Studio, Google Meet) o sesiones de estudio personal.
 
 ---
 
 ## 🏛 Arquitectura del Sistema
 
-ChordMeet opera bajo un flujo de datos unidireccional y reactivo impulsado por la API nativa de **Web MIDI** y el motor de síntesis de **Web Audio API**:
+ChordMeet opera bajo un flujo de datos unidireccional y reactivo impulsado por APIs nativas W3C: **Web MIDI**, **WebRTC MediaDevices** y **Web Audio API**:
 
 ```mermaid
 flowchart TD
-    subgraph Hardware_O_Virtual ["Entrada de Datos"]
-        MIDI["Controlador MIDI USB / Bluetooth"]
+    subgraph Hardware_O_Virtual ["Entradas de Hardware & Dispositivos"]
+        MIDI["Controlador MIDI USB / Bluetooth\n(ej. Yamaha PSR-E383)"]
+        WEBCAM["Cámaras Web USB / Integradas\n(Rostro del profesor / Vista cenital de manos)"]
         QWERTY["Teclado de Computadora (QWERTY Virtual)"]
-        TOUCH["Pantalla Táctil / Mouse en Teclado"]
+        TOUCH["Pantalla Táctil / Clics de Mouse"]
     end
 
-    subgraph Core_Engine ["Capa de Control y Motor de Entrada"]
+    subgraph Core_Engine ["Capa de Control & Motores"]
         UWM["useWebMidi Hook"]
         FILTER["Filtro de Canal MIDI (Canal 1 / Omni)"]
         SUSTAIN_ENGINE["Motor Acústico de Sustain (Decaimiento Gradual)"]
         SYNTH["AudioSynth (Osciladores Triangle/Sine)"]
+        MEDIA_STREAM["WebRTC MediaDevices API (getUserMedia / enumerateDevices)"]
     end
 
     subgraph State_Management ["Estado Reactivo Central (App.jsx)"]
         ACTIVE_NOTES["activeNotes / allAudibleNotes"]
         KEY_SIG["Tonalidad Activa (Key Signature)"]
         QUADRANTS["Sistema de 4 Cuadrantes & Divisores Cartesianos"]
-        THEME_STATE["Temas Visuales & Acentos de Color"]
+        THEME_STATE["Temas Visuales Calibrados & Acentos"]
     end
 
-    subgraph UI_Panels ["Módulos Visuales (Widgets)"]
+    subgraph UI_Panels ["Módulos Visuales (Widgets Independientes)"]
         CHORD_DISP["ChordDisplay\n(Tonal.js + Priorización Inversiones)"]
         STAFF_DISP["Staff Grand Staff\n(VexFlow 4 SVG Renderer)"]
         KEYBOARD_DISP["Keyboard 61 Teclas\n(C1-C6 con Iluminación Orgánica)"]
+        CAMERA_WIDGET["CameraWidget\n(Video HD, Rotación 90°, Espejo, Hover UI)"]
         PEDAL_WIDGET["SustainPedal 3D Graphic\n(CC 64 + Polaridad)"]
         METRONOME_WIDGET["Metronome\n(Audio Clicks + Tap Tempo)"]
         RECORDER_WIDGET["MidiRecorder & Looper\n(Captura con Timestamps)"]
@@ -79,6 +86,7 @@ flowchart TD
     FILTER --> UWM
     QWERTY --> UWM
     TOUCH --> UWM
+    WEBCAM --> MEDIA_STREAM
 
     UWM --> SUSTAIN_ENGINE
     UWM --> SYNTH
@@ -89,10 +97,12 @@ flowchart TD
     ACTIVE_NOTES --> KEYBOARD_DISP
     ACTIVE_NOTES --> RECORDER_WIDGET
     ACTIVE_NOTES --> HISTORY_WIDGET
+    MEDIA_STREAM --> CAMERA_WIDGET
 
     KEY_SIG --> CHORD_DISP
     KEY_SIG --> STAFF_DISP
     KEY_SIG --> KEYBOARD_DISP
+    THEME_STATE --> UI_Panels
 ```
 
 ---
@@ -100,15 +110,15 @@ flowchart TD
 ## 🚀 Alcance y Características Principales
 
 ### 1. Diseño Modular en 4 Cuadrantes y Fusión de Paneles
-La interfaz rompe con las estructuras rígidas tradicionales de software musical mediante un lienzo matricial dinámico:
-- **División Cartesiana de 2 Ejes (X / Y):** El usuario ajusta libremente el porcentaje de ancho y alto de los paneles arrastrando los divisores centrales (rango de 15% a 85%).
+La interfaz rompe con las estructuras rígidas de los softwares de audio tradicionales mediante un lienzo matricial dinámico:
+- **División Cartesiana de 2 Ejes (X / Y):** El usuario ajusta libremente el porcentaje de ancho y alto de los paneles arrastrando los divisores centrales (rango del 15% al 85%).
 - **Modos de Fusión Inteligente (`Layout Modes`):**
   - **`grid` (2x2):** 4 cuadrantes independientes.
-  - **`merge-bottom` (Recomendado para Piano):** 2 cuadrantes superiores (ej. Acordes + Pentagrama) y 1 cuadrante inferior fusionado a 100% de ancho para el piano interactivo.
-  - **`merge-top`:** Panel superior fusionado ancho completo con 2 inferiores.
+  - **`merge-bottom` (Recomendado para Piano):** 2 cuadrantes superiores (ej. Acordes + Pentagrama o Acordes + Cámara de Manos) y 1 cuadrante inferior fusionado al 100% de ancho para el teclado interactivo.
+  - **`merge-top`:** Panel superior combinado al ancho completo con 2 cuadrantes inferiores.
   - **`merge-left` / `merge-right`:** Paneles verticales combinados a pantalla completa.
 - **Drag & Drop Interactivo:** Las pestañas de cada cuadrante pueden arrastrarse entre sí para intercambiar sus posiciones de manera intuitiva.
-- **Selector de Widgets por Zona:** Cada cuadrante cuenta con un menú desplegable para montar cualquiera de los 7 módulos disponibles o dejar el cuadrante limpio en modo vacío (`empty`).
+- **Selector de Widgets por Zona:** Cada cuadrante cuenta con un selector desplegable para montar cualquiera de los **8 módulos disponibles** o dejar el cuadrante en modo vacío (`empty`).
 
 ---
 
@@ -141,17 +151,33 @@ Renderizado vectorial SVG de partitura en tiempo real:
 
 ### 4. Teclado Interactivo de 61 Teclas (C1 a C6)
 Optimizado como el estándar más utilizado en pianos digitales portátiles de 5 octavas:
-- **Aprovechamiento Total del Ancho (100% Responsive):** El ancho de las teclas blancas y negras se recalcula proporcionalmente para llenar todo el ancho del cuadrante, eliminando los márgenes negros muertos laterales.
+- **Aprovechamiento Total del Ancho (100% Responsive):** El ancho de las teclas blancas y negras se recalcula proporcionalmente para llenar todo el ancho del cuadrante, eliminando márgenes muertos laterales.
 - **Rango Canónico y Rotulado de Do:** 
   - La primera tecla física del teclado (MIDI 36) se rotula y procesa como **`C1`**.
-  - Octavas completas: **`C1`**, **`C2`**, **`C3`** (Do central con indicador de referencia), **`C4`**, **`C5`** y **`C6`** (MIDI 96).
+  - Octavas completas: **`C1`**, **`C2`**, **`C3`** (Do central con indicador visual de referencia), **`C4`**, **`C5`** y **`C6`** (MIDI 96).
 - **Iluminación Orgánica Diferenciada:** Teclas blancas activas con iluminación cálida de fondo visible y teclas negras con brillo neón intenso, evitando la ambigüedad visual de si una tecla blanca está siendo presionada.
 - **Interacción Táctil y QWERTY:** Puede tocarse con mouse, pantalla táctil multitáctil o mediante el teclado de la computadora sin hardware adicional.
 
 ---
 
-### 5. Simulación Física Acústica del Pedal de Sustain (CC 64)
-El soporte de pedal en ChordMeet va más allá de un interruptor binario:
+### 5. Módulo de Cámara de Video (Cámaras Web en Tiempo Real)
+Diseñado específicamente para docencia en línea y streaming musical pedagógico:
+- **Integración WebRTC Nativa:** Permite capturar cualquier cámara web conectada al sistema operativo mediante `MediaDevices.getUserMedia` y `MediaDevices.enumerateDevices`.
+- **Soporte Multicámara Simultánea:** El usuario puede instanciar el widget de cámara en múltiples cuadrantes al mismo tiempo con fuentes de video independientes (por ejemplo: la cámara integrada de la laptop apuntando al rostro del instructor en el cuadrante 1, y una cámara USB cenital enfocada a las manos sobre el piano en el cuadrante 2).
+- **Interfaz Inteligente Activada por Cursor (*Hover-Only Controls*):**
+  - Para no estorbar la visión de la clase ni ensuciar la transmisión en OBS o Google Meet, la botonera de configuración permanece completamente invisible.
+  - Al posar el cursor sobre el cuadrante, los controles se revelan suavemente mediante transiciones CSS, y vuelven a ocultarse al retirar el mouse.
+- **Herramientas de Video Avanzadas:**
+  - **Rotación en 90° (0°, 90°, 180°, 270°):** Corrige al instante cámaras cenitales o laterales montadas en trípodes o brazos articulados. Aplica un auto-escalado geométrico inteligente para prevenir el recorte de esquinas al girar entre modos horizontal y vertical.
+  - **Efecto Espejo (Flip Horizontal):** Invierte horizontalmente la imagen para que los movimientos del pianista correspondan a la vista natural del alumno (mano izquierda a la izquierda y derecha a la derecha).
+  - **Modo de Ajuste (Cover vs. Contain):** Permite elegir entre rellenar la totalidad del cuadrante sin bordes negros (*Cover*) o preservar la relación de aspecto completa 16:9 (*Contain*).
+  - **Conmutador de Energía (Pausa / Encendido):** Desactiva las pistas de video para liberar consumo de CPU y GPU cuando la cámara no está en uso.
+- **Persistencia por Cuadrante:** Los ajustes de dispositivo seleccionado, rotación, modo espejo y encuadre se guardan automáticamente en `localStorage` por ID de cuadrante.
+
+---
+
+### 6. Simulación Física Acústica del Pedal de Sustain (CC 64)
+El soporte de pedal en ChordMeet reproduce la mecánica acústica del instrumento:
 - **Decaimiento Acústico Gradual con Pedal Presionado:**
   Simula la vibración libre y extinción natural de las cuerdas en un piano acústico real. Al mantener presionado el pedal y tocar notas sucesivas, cada tecla va perdiendo intensidad lumínica y sonora en el orden cronológico en que fue tocada, según el tiempo de decaimiento seleccionado:
   - `2.0s` (Rápido / Estudio seco)
@@ -167,7 +193,7 @@ El soporte de pedal en ChordMeet va más allá de un interruptor binario:
 
 ---
 
-### 6. Herramientas Integradas de Práctica y Producción
+### 7. Herramientas Integradas de Práctica y Producción
 - **Progresión Armónica (`ChordHistory`):** Registra cronológicamente la secuencia de acordes tocados, destacando con animación el acorde más reciente. Incluye botón para copiar la progresión en texto al portapapeles (`C  ➔  Fmaj7  ➔  G7  ➔  A-`).
 - **Metrónomo Digital:**
   - Control de BPM ajustable (30 a 280 BPM) con botones de incremento fino ($\pm 1$) y saltos rápidos ($\pm 5$).
@@ -182,7 +208,7 @@ El soporte de pedal en ChordMeet va más allá de un interruptor binario:
 
 ---
 
-### 7. Sintetizador Web Audio Polifónico Incorporado
+### 8. Sintetizador Web Audio Polifónico Incorporado
 No requiere plugins externos ni software adicional para sonar:
 - Síntesis de modelado sustractivo con oscilador doble: **Onda Triangular** (cuerpo armónico cálido del piano) y **Onda Sinusoidal** (claridad en la frecuencia fundamental).
 - Curvas de ganancia con ataque instantáneo de macillo (8 ms) y caída exponencial de resonancia.
@@ -191,19 +217,19 @@ No requiere plugins externos ni software adicional para sonar:
 
 ---
 
-## 🎨 Temas Visuales y Modo Minimalista
+## 🎨 Temas Visuales Calibrados y Modo Minimalista
 
-ChordMeet incluye 4 temas cromáticos cuidadosamente calibrados para lectura prolongada sin fatiga visual:
+ChordMeet cuenta con 4 temas cromáticos profundamente calibrados no solo a nivel de colores generales, sino en los materiales de cada widget (chasis de piano, fieltros, pergamino de partituras e insignias):
 
-| Tema | Estilo | Entorno Ideal |
-| :--- | :--- | :--- |
-| **Estudio Neón** | Modo oscuro moderno con acentos cian/azul luminosos | Producción musical en estudio y streaming nocturno |
-| **Concierto Clásico** | Acabado en madera de nogal, oro cálido y partitura en pergamino marfil | Pianistas clásicos e interpretación acústica |
-| **Jazz Lounge** | Terciopelo púrpura oscuro, latón dorado y club nocturno | Práctica de armonía moderna y estándares de jazz |
-| **Conservatorio Claro** | Modo diurno de alto contraste, fondo blanco y lectura limpia | Aulas de clase iluminadas y proyección educativa |
+| Tema | Chasis & Fondo | Pentagrama (Grand Staff) | Teclado & Fieltro | Acentos & Badges | Entorno Ideal |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Estudio Neón** | Cyber Navy `#070b14` con tarjetas `#0d1527` y bordes cian neón | Fondo oscuro con notas y líneas en cian luminoso | Fieltro azul eléctrico, teclas blancas puras y brillo cian intenso | Badges cian luminiscentes y texto de alto contraste | Producción en estudio oscuro y streaming de música moderna |
+| **Concierto Clásico** | Madera noble de caoba `#120a05` con tarjetas `#1c120c` y bordes cálidos | **Papel pergamino marfil auténtico (`#fcf8ee`)** con grabado en tinta sepia/carbón tradicional | Fieltro carmesí borgoña tradicional, teclas marfil cálido `#fffbf0` con reflejos dorados | Badges en ámbar cálido y oro antiguo | Pianistas clásicos, recitales y música acústica tradicional |
+| **Jazz Lounge** | Terciopelo medianoche `#0d0718` con tarjetas `#160c26` | Fondo nocturno con notas y pentagrama en neón violeta brillante | Fieltro púrpura oscuro aterciopelado, teclas marfil con iluminación lavanda | Badges en púrpura eléctrico y acentos de latón dorado | Clases de armonía moderna, bebop y clubes de jazz |
+| **Conservatorio Claro** | Modo diurno de alto contraste, chasis de aluminio cepillado `#e2e8f0` y tarjetas blanco puro `#ffffff` | **Lectura editorial clásica (Henle / Bärenreiter)** con pentagrama blanco inmaculado y tinta negra carbón | Fieltro rojo escarlata de piano vertical y teclas nítidas | Badges en pizarra neutra `#475569` con bordes ultra nítidos | Aulas de clase fuertemente iluminadas y proyectores de video |
 
 > [!TIP]
-> **Modo Presentación / Pantalla Limpia:** Presiona la tecla **`H`** en cualquier momento para ocultar la barra superior de controles al 100%, dejando únicamente los paneles de música en pantalla completa. Presiona **`H`** nuevamente para restaurarla.
+> **Modo Presentación / Pantalla Limpia:** Presiona la tecla **`H`** en cualquier momento para ocultar la barra superior de controles al 100%, dejando únicamente los paneles de música y video en pantalla completa. Presiona **`H`** nuevamente para restaurarla.
 
 ---
 
@@ -218,6 +244,7 @@ ChordMeet incluye 4 temas cromáticos cuidadosamente calibrados para lectura pro
 | **Estilos & UI** | Tailwind CSS | `^3.4.17` | Utilidades de diseño responsivo, cuadrículas fluidas y animaciones |
 | **Iconografía** | Lucide React | `^0.469.0` | Iconografía vectorial SVG coherente y ligera |
 | **Hardware Audio/MIDI** | Web MIDI API | Nativa W3C | Comunicación directa con pianos y controladores USB/Bluetooth |
+| **Captura de Video** | WebRTC MediaDevices | Nativa W3C | Acceso a cámaras web y transmisión en vivo sin latencia |
 | **Generación Sonora** | Web Audio API | Nativa W3C | Síntesis acústica polifónica y clics de metrónomo con precisión de sample |
 
 ---
@@ -241,10 +268,11 @@ ChordMeet/
     │
     ├── components/
     │   ├── HeaderControls.jsx   # Barra superior de configuración rápida y dispositivos
-    │   ├── QuadrantContainer.jsx# Contenedor modular con pestañas arrastrables y selector
-    │   ├── ChordDisplay.jsx     # Detector armónico, formateo de acordes y priorización
+    │   ├── QuadrantContainer.jsx# Contenedor modular con pestañas arrastrables y selector de widgets
+    │   ├── ChordDisplay.jsx     # Detector armónico, formateo de acordes y priorización de inversiones
     │   ├── Staff.jsx            # Renderizador de Gran Pentagrama con VexFlow 4
-    │   ├── Keyboard.jsx         # Teclado interactivo de 61 teclas responsive
+    │   ├── Keyboard.jsx         # Teclado interactivo de 61 teclas responsive (C1-C6)
+    │   ├── CameraWidget.jsx     # Captura de video WebRTC (cámaras de rostro/manos con rotación, espejo y controles hover)
     │   ├── SustainPedal.jsx     # Pedal 3D con indicador de CC 64, decaimiento y polaridad
     │   ├── Metronome.jsx        # Metrónomo digital con control de compás y tap tempo
     │   ├── MidiRecorder.jsx     # Grabadora, reproductor y looper de eventos MIDI
@@ -264,7 +292,7 @@ ChordMeet/
 ### Conexión de tu Piano o Controlador MIDI
 1. Conecta tu teclado MIDI por cable USB o interfaz MIDI-USB a tu computadora antes de abrir la aplicación.
 2. Abre ChordMeet en un navegador compatible (Chrome, Edge, Brave u Opera).
-3. El navegador solicitará permisos de acceso MIDI: haz clic en **Permitir**.
+3. El navegador solicitará permisos de acceso MIDI y Cámara: haz clic en **Permitir**.
 4. En la barra superior, verás el nombre de tu teclado detectado en el selector de dispositivos.
 
 ### Mapeo de Teclado de Computadora (Modo Virtual QWERTY)
@@ -292,13 +320,15 @@ Para mantener un criterio de ingeniería claro y transparente, se documentan las
 
 1. **Compatibilidad de Navegadores con Web MIDI API:**
    - Funciona de forma óptima y nativa en navegadores basados en **Chromium** (Google Chrome, Microsoft Edge, Brave, Opera).
-   - En **Firefox** y **Safari**, la Web MIDI API requiere configuraciones experimentales avanzadas o flags del sistema, ya que sus motores no la habilitan de forma predeterminada por políticas de privacidad de hardware.
+   - En **Firefox** y **Safari**, la Web MIDI API requiere configuraciones experimentales avanzadas o flags del sistema, ya que sus motores restringen de forma predeterminada el acceso directo a hardware MIDI por políticas de privacidad.
 2. **Generación de Audio por Síntesis vs. Samples Reales:**
-   - El sintetizador interno utiliza osciladores de Web Audio API para asegurar carga instantánea y cero latencia sin descargas pesadas. No utiliza librerías multisampleadas de gigabytes (como Kontakt o SoundFonts SFZ de alta resolución acústica).
+   - El sintetizador interno utiliza osciladores de Web Audio API para asegurar carga instantánea y cero latencia sin descargas pesadas. No sustituye librerías multisampleadas de gigabytes (como Kontakt o SoundFonts SFZ de alta resolución acústica).
 3. **Análisis Armónico Basado en Reglas Teóricas:**
-   - La detección armónica se basa en teoría musical clásica y de jazz estática mediante distancias interválicas y tonalidad predefinida. No utiliza redes neuronales predictivas para adivinar intenciones armónicas en pasajes politonales de vanguardia o atonalidad extendida.
+   - La detección armónica se basa en teoría musical clásica y de jazz estática mediante distancias interválicas y tonalidad predefinida. No utiliza redes neuronales predictivas para deducir intenciones armónicas en pasajes politonales de vanguardia o atonalidad extendida.
 4. **Rango de Teclado Fijo a 61 Teclas:**
-   - Para maximizar el espacio útil en pantalla sin obligar a deslizar horizontalmente, el teclado está calibrado a 61 teclas ($C1$ a $C6$). Las notas MIDI físicas fuera de este rango son recibidas y procesadas por el detector de acordes y el pentagrama, pero no tienen una tecla visual renderizada en el teclado inferior.
+   - Para maximizar el espacio útil en pantalla sin obligar a deslizar horizontalmente, el teclado visual está calibrado a 61 teclas ($C1$ a $C6$). Las notas MIDI físicas fuera de este rango son recibidas y procesadas por el detector de acordes y el pentagrama, pero no tienen una tecla visual renderizada en el teclado inferior.
+5. **Permisos de Cámara en Conexiones Seguras:**
+   - El módulo WebRTC de cámara requiere que la aplicación se sirva a través de un contexto seguro (`HTTPS` o `localhost`), según las especificaciones de seguridad de los navegadores modernos.
 
 ---
 
@@ -308,23 +338,11 @@ ChordMeet está concebido arquitectónicamente para expandirse en módulos de ni
 
 ```mermaid
 flowchart LR
-    A["ChordMeet v1.0 (Actual)\n• Web MIDI 61 teclas\n• VexFlow Grand Staff\n• Acordes Tonal.js\n• Sustain Acústico"] 
+    A["ChordMeet v1.1 (Actual)\n• Web MIDI 61 teclas\n• VexFlow Grand Staff\n• Acordes Tonal.js + Inversiones\n• Sustain Acústico\n• Cámara WebRTC con Rotación"] 
     --> B["Fase 2: Audio de Alta Fidelidad\n• Motor SoundFonts SF2\n• AudioWorklet dedicado\n• Ecualizador paramétrico"]
     --> C["Fase 3: Entrenador Interactivo\n• Reconocimiento de micrófono\n• Lectura a primera vista\n• Dictado de intervalos"]
     --> D["Fase 4: Colaboración & Exportación\n• Sesiones remotas WebRTC\n• Exportación MIDI y MusicXML\n• Compatibilidad DAW VST/AU"]
 ```
-
-### Líneas de Expansión Planificadas:
-1. **Soporte de SoundFonts y Samples Hi-Fi (AudioWorklet):**
-   - Incorporar un reproductor de SoundFonts SF2 / SFZ cargado en memoria mediante WebAssembly para reproducir timbres fieles de pianos Steinway, Yamaha C7, Rhodes o Wurlitzer.
-2. **Reconocimiento Polifónico por Micrófono (Audio Pitch Detection):**
-   - Implementar algoritmos de transformada rápida de Fourier (FFT) o modelos como CREPE para permitir a estudiantes con pianos acústicos verticales tradicionales usar la aplicación sin necesidad de salidas MIDI.
-3. **Módulo de Entrenamiento Auditivo y Lectura a Primera Vista:**
-   - Un modo de juego pedagógico que proponga notas o acordes en el pentagrama y espere a que el usuario presione las teclas correctas en su instrumento con métricas de precisión y velocidad.
-4. **Colaboración Remota Profesor-Alumno (WebRTC):**
-   - Permitir a un docente compartir una sala con su alumno donde ambos teclados se reflejen en la misma pantalla en tiempo real con colores diferenciados.
-5. **Exportación Estándar a Software de Notación:**
-   - Exportación de las sesiones de grabación en formato `.mid` estándar y `.musicxml` para abrir directamente en software como MuseScore, Sibelius, Dorico o Finale.
 
 ---
 
@@ -339,7 +357,7 @@ flowchart LR
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/ChordMeet.git
+   git clone https://github.com/osvmendoza/ChordMeet
    cd ChordMeet
    ```
 
@@ -370,9 +388,3 @@ flowchart LR
 ## 📄 Licencia
 
 Este proyecto está disponible bajo la licencia **MIT**. Eres libre de usarlo, modificarlo y adaptarlo para propósitos personales, educativos o comerciales respetando los términos de autoría.
-
----
-
-<p align="center">
-  Hecho con pasión por la música, la armonía y el código bien estructurado. 🎵🎹
-</p>
