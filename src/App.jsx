@@ -89,7 +89,7 @@ export default function App() {
       activeTheme.faviconCutout || '#040710',
       activeTheme.brandGradientEnd || null
     );
-    let link = document.querySelector("link[rel~='icon']");
+    let link = document.querySelector("link[rel='icon'][type='image/svg+xml']");
     if (!link) {
       link = document.createElement('link');
       link.rel = 'icon';
