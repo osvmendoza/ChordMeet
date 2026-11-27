@@ -5,7 +5,7 @@ export default function MidiRecorder({
   activeNotes = [],
   onTriggerNoteOn,
   onTriggerNoteOff,
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   const [isRecording, setIsRecording] = useState(false);
@@ -187,7 +187,7 @@ export default function MidiRecorder({
             className="h-full rounded-full transition-all duration-75"
             style={{
               width: `${isPlaying ? playbackProgress : isRecording ? 100 : 0}%`,
-              backgroundColor: isRecording ? '#ef4444' : accentColor
+              backgroundColor: isRecording ? '#ff007a' : accentColor
             }}
           />
         </div>
@@ -216,7 +216,7 @@ export default function MidiRecorder({
           {!isRecording ? (
             <button
               onClick={startRecording}
-              className="p-3 rounded-full bg-rose-600/20 hover:bg-rose-600/30 text-rose-500 border border-rose-500/40 shadow-lg hover:scale-105 transition-all"
+              className="p-3 rounded-full bg-[#ff007a]/20 hover:bg-[#ff007a]/30 text-[#ff007a] border border-[#ff007a]/45 shadow-lg hover:scale-105 transition-all"
               title="Comenzar a grabar"
             >
               <Circle className="w-5 h-5 fill-current" />
@@ -224,7 +224,7 @@ export default function MidiRecorder({
           ) : (
             <button
               onClick={stopRecording}
-              className="p-3 rounded-full bg-rose-600 text-white shadow-lg animate-pulse hover:scale-105 transition-all"
+              className="p-3 rounded-full bg-[#ff007a] text-white shadow-lg shadow-[#ff007a]/40 animate-pulse hover:scale-105 transition-all"
               title="Detener grabación"
             >
               <Square className="w-5 h-5 fill-current" />
@@ -236,7 +236,7 @@ export default function MidiRecorder({
             <button
               onClick={startPlayback}
               disabled={recordedEvents.length === 0 || isRecording}
-              className="p-3 rounded-full bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-500/40 shadow-lg disabled:opacity-30 disabled:pointer-events-none hover:scale-105 transition-all"
+              className="p-3 rounded-full bg-[#00fff2]/15 hover:bg-[#00fff2]/25 text-[#00fff2] border border-[#00fff2]/45 shadow-lg disabled:opacity-30 disabled:pointer-events-none hover:scale-105 transition-all"
               title="Reproducir frase"
             >
               <Play className="w-5 h-5 fill-current ml-0.5" />
@@ -244,7 +244,7 @@ export default function MidiRecorder({
           ) : (
             <button
               onClick={stopPlayback}
-              className="p-3 rounded-full bg-amber-500 text-slate-950 shadow-lg hover:scale-105 transition-all"
+              className="p-3 rounded-full bg-[#0068ff] text-white shadow-lg hover:scale-105 transition-all"
               title="Detener reproducción"
             >
               <Square className="w-5 h-5 fill-current" />
@@ -256,7 +256,7 @@ export default function MidiRecorder({
             onClick={() => setIsLooping(!isLooping)}
             className={`p-2.5 rounded-xl border transition-all ${
               isLooping 
-                ? 'bg-indigo-600/30 border-indigo-500 text-indigo-300 font-bold' 
+                ? 'bg-[#0068ff]/25 border-[#0068ff] text-[#00fff2] font-bold' 
                 : 'bg-white/5 border-white/10 opacity-70 hover:opacity-100 text-slate-300'
             }`}
             title={isLooping ? 'Bucle activado' : 'Bucle desactivado'}

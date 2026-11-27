@@ -11,7 +11,7 @@ export default function Keyboard({
   keyHeight = null,           // Height in px or null for auto full-height
   labelMode = 'c-only',       // 'c-only', 'all', 'none'
   scaleNotes = [],            // Array of pitch classes in active scale
-  accentColor = '#38bdf8',    // Custom user color
+  accentColor = '#00fff2',    // Custom user color
   theme = null,               // Active theme object
   onNoteOn,                   // Callback (midi)
   onNoteOff                   // Callback (midi)
@@ -82,6 +82,17 @@ export default function Keyboard({
 
   const glowShadow = `0 0 16px ${hexToRgba(accentColor, 0.7)}, 0 0 30px ${hexToRgba(accentColor, 0.4)}`;
   const sustainedGlowShadow = `0 0 12px ${hexToRgba(accentColor, 0.35)}`;
+
+  // Compute readable label text color on pressed keys (dark text on bright cyan/white, white text on blue/magenta)
+  const isAccentLight = useMemo(() => {
+    const clean = (accentColor || '#00fff2').replace('#', '');
+    if (clean.length !== 6) return true;
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 155;
+  }, [accentColor]);
+  const pressedLabelClass = isAccentLight ? 'text-[#040710] font-black' : 'text-white font-black';
 
   return (
     <div 
@@ -178,11 +189,11 @@ export default function Keyboard({
                       <span 
                         className={`text-[10px] sm:text-xs font-mono font-bold tracking-tight select-none z-10 transition-colors ${
                           isPressed
-                            ? 'text-slate-950 font-black scale-110 drop-shadow-sm'
+                            ? `${pressedLabelClass} scale-110 drop-shadow-sm`
                             : isSustained
-                              ? 'text-slate-900 font-bold'
+                              ? (isAccentLight ? 'text-[#040710] font-bold' : 'text-white font-bold')
                               : k.isC
-                                ? (theme?.cKeyColor || 'text-indigo-600 font-extrabold')
+                                ? (theme?.cKeyColor || 'text-[#0068ff] font-extrabold')
                                 : whiteKeyText
                         }`}
                       >
@@ -257,7 +268,7 @@ export default function Keyboard({
                   )}
 
                   {(isPressed || isSustained) && (
-                    <span className="text-[9px] font-mono font-bold text-slate-950 pb-0.5 z-10 select-none">
+                    <span className={`text-[9px] font-mono pb-0.5 z-10 select-none ${pressedLabelClass}`}>
                       {k.name}
                     </span>
                   )}

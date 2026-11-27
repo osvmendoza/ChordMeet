@@ -14,26 +14,26 @@ export default function StatusBar({
   inputsCount = 0,
   activeChord = null,
   keySignature = 'C',
-  currentTheme = 'studio',
+  currentTheme = 'classic',
   onOpenPresets,
   onToggleMetronome,
   metronomeActive = false,
-  accentColor = '#38bdf8',
+  accentColor = '#0068ff',
   theme = null
 }) {
   const isLight = theme?.mode === 'light';
   const barBg = isLight
-    ? 'bg-sky-600 text-white'
-    : 'bg-[#007acc] text-white'; // Classic VS Code blue status bar
+    ? 'bg-[#0068ff] text-white'
+    : 'bg-[#0068ff] text-white';
 
   return (
     <footer 
       className={`h-6 text-[11px] font-mono px-3 flex items-center justify-between select-none z-30 shadow-md ${barBg}`}
       style={{
         backgroundColor: theme?.id === 'classic' 
-          ? '#52291a' 
-          : theme?.id === 'jazz' 
-            ? '#2b1b3d' 
+          ? '#0b0d12' 
+          : theme?.id === 'autumn' 
+            ? '#3b180a' 
             : undefined
       }}
     >

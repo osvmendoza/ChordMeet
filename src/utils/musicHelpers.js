@@ -95,14 +95,14 @@ export const getScaleNotes = (keySignature = 'C') => {
   return ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 };
 
-// Color presets for active keys
+// Color presets for active keys (aligned with ChordMeet brand + warm autumn palette)
 export const COLOR_PRESETS = [
-  { name: 'Azul Neón', value: '#38bdf8', glow: 'rgba(56, 189, 248, 0.6)' },
-  { name: 'Esmeralda', value: '#10b981', glow: 'rgba(16, 185, 129, 0.6)' },
-  { name: 'Púrpura Eléctrico', value: '#a855f7', glow: 'rgba(168, 85, 247, 0.6)' },
-  { name: 'Rosa Neón', value: '#f43f5e', glow: 'rgba(244, 63, 94, 0.6)' },
-  { name: 'Ámbar Cálido', value: '#f59e0b', glow: 'rgba(245, 158, 11, 0.6)' },
-  { name: 'Cian', value: '#06b6d4', glow: 'rgba(6, 182, 212, 0.6)' }
+  { name: 'Azul Eléctrico (ChordMeet)', value: '#0068ff', glow: 'rgba(0, 104, 255, 0.6)' },
+  { name: 'Ámbar Otoñal', value: '#ff6b1a', glow: 'rgba(255, 107, 26, 0.6)' },
+  { name: 'Oro Cálido', value: '#ffb020', glow: 'rgba(255, 176, 32, 0.6)' },
+  { name: 'Magenta / Carmín', value: '#ff007a', glow: 'rgba(255, 0, 122, 0.6)' },
+  { name: 'Cian Neón', value: '#00fff2', glow: 'rgba(0, 255, 242, 0.6)' },
+  { name: 'Blanco Puro', value: '#ffffff', glow: 'rgba(255, 255, 255, 0.55)' }
 ];
 
 // Determine if a MIDI note is black or white

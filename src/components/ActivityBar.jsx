@@ -9,6 +9,7 @@ import {
   Sliders,
   Maximize2
 } from 'lucide-react';
+import { ChordMeetIcon } from './BrandLogo';
 
 export default function ActivityBar({
   activeView = null,
@@ -18,7 +19,7 @@ export default function ActivityBar({
   onOpenSettings,
   onSelectPreset,
   theme = null,
-  accentColor = '#38bdf8'
+  accentColor = '#00fff2'
 }) {
   const isLight = theme?.mode === 'light';
   const barBg = isLight 
@@ -32,13 +33,16 @@ export default function ActivityBar({
     >
       {/* Top Group: Component Focus & Layouts */}
       <div className="flex flex-col items-center gap-3 w-full">
-        {/* VS Code Logo / App Icon */}
+        {/* ChordMeet Brand App Icon */}
         <div 
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-white mb-2 shadow-md cursor-pointer hover:scale-105 transition-transform"
-          style={{ background: `linear-gradient(135deg, ${accentColor}, #4f46e5)` }}
+          className="w-8 h-8 rounded-lg flex items-center justify-center mb-2 shadow-md cursor-pointer hover:scale-105 transition-transform"
           title="ChordMeet Studio"
         >
-          <Piano className="w-4 h-4 stroke-[2.2]" />
+          <ChordMeetIcon
+            className="w-7 h-7"
+            color={theme?.brandColor || accentColor}
+            cutoutColor={theme?.faviconCutout || '#040710'}
+          />
         </div>
 
         {/* Chords Shortcut */}

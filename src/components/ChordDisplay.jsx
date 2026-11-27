@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { Chord, Note } from '@tonaljs/tonal';
-import { Music2, Layers } from 'lucide-react';
+import { Layers } from 'lucide-react';
 import { midiToHarmonicNoteName, harmonizeChordSymbol } from '../utils/musicHelpers';
+import { ChordMeetIcon } from './BrandLogo';
 
 // Format chord symbols:
 // 1. Eliminate "M" for major chords (e.g. "CM" -> "C", "CMadd9" -> "Cadd9", "CM/G" -> "C / G")
@@ -50,7 +51,7 @@ export const prioritizeChords = (detectedChords) => {
 export default function ChordDisplay({ 
   activeNotes = [], 
   keySignature = 'C',
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   const badgeBg = theme?.badgeBg || 'bg-slate-800 text-slate-200 border-slate-700';
@@ -176,9 +177,12 @@ export default function ChordDisplay({
     <div className="w-full h-full flex flex-col justify-center items-center p-3 select-none overflow-hidden relative">
       {analysis.type === 'empty' ? (
         <div className="flex flex-col items-center justify-center py-2 text-center animate-fade-in">
-          <Music2 className={`w-10 h-10 sm:w-12 sm:h-12 mb-2 stroke-[1.5] opacity-30 animate-pulse ${subText}`} />
-          <p className="text-sm sm:text-base font-semibold opacity-70">Esperando notas MIDI...</p>
-          <p className={`text-xs mt-1 max-w-xs ${subText} opacity-50`}>
+          <ChordMeetIcon
+            className="w-11 h-11 sm:w-14 sm:h-14 mb-2.5 opacity-30 animate-pulse"
+            color={theme?.brandColor || accentColor}
+          />
+          <p className="text-sm sm:text-base font-semibold opacity-75">Esperando notas MIDI...</p>
+          <p className={`text-xs mt-1 max-w-xs ${subText} opacity-60`}>
             Toca notas en tu teclado para analizar acordes
           </p>
         </div>

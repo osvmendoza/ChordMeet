@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Plus, Minus, Volume2, Timer } from 'lucide-react';
 import { synth } from '../utils/audioSynth';
 
-export default function Metronome({ accentColor = '#38bdf8', theme = null }) {
+export default function Metronome({ accentColor = '#00fff2', theme = null }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(100);
   const [beatsPerMeasure, setBeatsPerMeasure] = useState(4); // 4/4, 3/4, etc.
@@ -81,7 +81,7 @@ export default function Metronome({ accentColor = '#38bdf8', theme = null }) {
         onClick={() => setIsPlaying(!isPlaying)}
         className={`p-1.5 rounded-lg font-bold flex items-center justify-center transition-all ${
           isPlaying 
-            ? 'bg-rose-500 text-white shadow-md' 
+            ? 'bg-[#ff007a] text-white shadow-md shadow-[#ff007a]/30' 
             : 'hover:bg-white/10 text-slate-300'
         }`}
         style={{
@@ -124,7 +124,7 @@ export default function Metronome({ accentColor = '#38bdf8', theme = null }) {
             }`}
             style={{
               backgroundColor: isPlaying && currentBeat === i
-                ? (i === 0 ? '#ef4444' : accentColor)
+                ? (i === 0 ? '#ff007a' : accentColor)
                 : 'currentColor'
             }}
           />

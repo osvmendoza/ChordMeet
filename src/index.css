@@ -14,14 +14,14 @@
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #040710;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1b2a4a;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #0068ff;
 }
 
 /* 3D styling for Piano Keys */

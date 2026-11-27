@@ -4,7 +4,7 @@ import { History, Trash2, Copy, Check } from 'lucide-react';
 export default function ChordHistory({ 
   history = [], 
   onClear, 
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null 
 }) {
   const [copied, setCopied] = useState(false);

@@ -13,6 +13,7 @@ import CameraWidget from './components/CameraWidget';
 import { useWebMidi } from './hooks/useWebMidi';
 import { synth } from './utils/audioSynth';
 import { THEMES } from './utils/themeConfig';
+import { getFaviconDataUrl } from './components/BrandLogo';
 import { midiToHarmonicNoteName, harmonizeChordSymbol, getScaleNotes } from './utils/musicHelpers';
 import { Chord, Midi } from '@tonaljs/tonal';
 import { Eye, GripVertical, GripHorizontal } from 'lucide-react';
@@ -41,10 +42,10 @@ const QWERTY_MIDI_MAP = {
 
 export default function App() {
   // App preferences state
-  const [currentThemeId, setCurrentThemeId] = useState('studio');
+  const [currentThemeId, setCurrentThemeId] = useState('classic');
   const [keyCount, setKeyCount] = useState(61);
   const [labelMode, setLabelMode] = useState('c-only');
-  const [accentColor, setAccentColor] = useState('#38bdf8');
+  const [accentColor, setAccentColor] = useState(THEMES.classic.defaultAccent);
   const [keySignature, setKeySignature] = useState('C');
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [audioVolume, setAudioVolume] = useState(0.35);
@@ -78,8 +79,30 @@ export default function App() {
   const [draggedWidget, setDraggedWidget] = useState(null);
   const [chordHistory, setChordHistory] = useState([]);
 
-  const activeTheme = THEMES[currentThemeId] || THEMES.studio;
+  const activeTheme = THEMES[currentThemeId] || THEMES.classic;
   const gridContainerRef = useRef(null);
+
+  // Sync browser favicon and theme-color meta tag with the active ChordMeet theme
+  useEffect(() => {
+    const faviconUrl = getFaviconDataUrl(
+      activeTheme.brandColor || activeTheme.defaultAccent,
+      activeTheme.faviconCutout || '#040710',
+      activeTheme.brandGradientEnd || null
+    );
+    let link = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/svg+xml';
+      document.head.appendChild(link);
+    }
+    link.href = faviconUrl;
+
+    const metaTheme = document.querySelector("meta[name='theme-color']");
+    if (metaTheme && activeTheme.themeColor) {
+      metaTheme.setAttribute('content', activeTheme.themeColor);
+    }
+  }, [activeTheme]);
 
   // Web MIDI Hook
   const {
@@ -508,10 +531,10 @@ export default function App() {
               {/* Vertical Divider X */}
               <div
                 onMouseDown={handleXResizeStart}
-                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
                 title="Arrastra para cambiar el ancho de las columnas"
               >
-                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="h-10 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="h-full flex-1 overflow-hidden">
@@ -522,10 +545,10 @@ export default function App() {
             {/* Horizontal Divider Y */}
             <div
               onMouseDown={handleYResizeStart}
-              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               title="Arrastra para cambiar la altura de las filas"
             >
-              <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              <div className="w-12 h-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
             </div>
 
             {/* Bottom Row: Q3 (Left) + Q4 (Right) */}
@@ -537,10 +560,10 @@ export default function App() {
               {/* Vertical Divider X */}
               <div
                 onMouseDown={handleXResizeStart}
-                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
                 title="Arrastra para cambiar el ancho de las columnas"
               >
-                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="h-10 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="h-full flex-1 overflow-hidden">
@@ -562,10 +585,10 @@ export default function App() {
               {/* Vertical Divider X */}
               <div
                 onMouseDown={handleXResizeStart}
-                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
                 title="Arrastra para cambiar la proporción izquierda / derecha"
               >
-                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="h-10 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="h-full flex-1 overflow-hidden">
@@ -576,10 +599,10 @@ export default function App() {
             {/* Horizontal Divider Y */}
             <div
               onMouseDown={handleYResizeStart}
-              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               title="Arrastra para cambiar la altura del teclado / panel inferior"
             >
-              <div className="w-16 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              <div className="w-16 h-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
             </div>
 
             {/* Bottom Row: Merged Q3 spanning 100% full width */}
@@ -600,10 +623,10 @@ export default function App() {
             {/* Horizontal Divider Y */}
             <div
               onMouseDown={handleYResizeStart}
-              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               title="Arrastra para cambiar la altura del panel superior"
             >
-              <div className="w-16 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              <div className="w-16 h-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
             </div>
 
             {/* Bottom Row: Q3 and Q4 */}
@@ -614,10 +637,10 @@ export default function App() {
 
               <div
                 onMouseDown={handleXResizeStart}
-                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
                 title="Arrastra para cambiar el ancho de las columnas"
               >
-                <div className="h-10 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="h-10 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="h-full flex-1 overflow-hidden">
@@ -638,10 +661,10 @@ export default function App() {
             {/* Vertical Divider X */}
             <div
               onMouseDown={handleXResizeStart}
-              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               title="Arrastra para cambiar el ancho de la columna izquierda"
             >
-              <div className="h-12 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              <div className="h-12 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
             </div>
 
             {/* Right Column: Q2 (Top) and Q4 (Bottom) */}
@@ -652,9 +675,9 @@ export default function App() {
 
               <div
                 onMouseDown={handleYResizeStart}
-                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               >
-                <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="w-12 h-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="flex-1 w-full overflow-hidden">
@@ -675,9 +698,9 @@ export default function App() {
 
               <div
                 onMouseDown={handleYResizeStart}
-                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+                className="h-2 hover:h-2.5 cursor-row-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
               >
-                <div className="w-12 h-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+                <div className="w-12 h-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
               </div>
 
               <div className="flex-1 w-full overflow-hidden">
@@ -688,9 +711,9 @@ export default function App() {
             {/* Vertical Divider X */}
             <div
               onMouseDown={handleXResizeStart}
-              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-indigo-500/20 rounded transition-all select-none"
+              className="w-2 hover:w-2.5 cursor-col-resize z-30 flex items-center justify-center group bg-transparent hover:bg-white/10 rounded transition-all select-none"
             >
-              <div className="h-12 w-0.5 rounded-full bg-slate-600/40 group-hover:bg-indigo-400 transition-colors" />
+              <div className="h-12 w-0.5 rounded-full bg-slate-500/35 group-hover:bg-current transition-colors" />
             </div>
 
             {/* Right Column: Merged Q2 spanning 100% full height */}

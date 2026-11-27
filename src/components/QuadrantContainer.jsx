@@ -34,7 +34,7 @@ export default function QuadrantContainer({
   onDragStartWidget,           // (widgetId, sourceQuadrant)
   onDropWidget,                // (targetQuadrant)
   isDropTarget = false,
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null,
   children
 }) {
@@ -105,7 +105,9 @@ export default function QuadrantContainer({
               }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">
+              <div className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border-b ${
+                isLight ? 'text-slate-500 border-slate-200' : 'text-slate-400 border-white/10'
+              }`}>
                 Seleccionar Vista:
               </div>
               {WIDGET_OPTIONS.map((opt) => (
@@ -115,9 +117,10 @@ export default function QuadrantContainer({
                     onChangeWidget(opt.id);
                     setDropdownOpen(false);
                   }}
-                  className={`w-full text-left px-3 py-1.5 hover:bg-indigo-600 hover:text-white flex items-center gap-2 ${
-                    widgetId === opt.id ? 'font-bold text-sky-400 bg-white/5' : ''
+                  className={`w-full text-left px-3 py-1.5 hover:bg-[#0068ff] hover:text-white flex items-center gap-2 transition-colors ${
+                    widgetId === opt.id ? 'font-bold bg-white/5' : ''
                   }`}
+                  style={widgetId === opt.id ? { color: accentColor } : undefined}
                 >
                   <opt.icon className="w-3.5 h-3.5" />
                   <span>{opt.name}</span>
@@ -147,10 +150,17 @@ export default function QuadrantContainer({
         {/* Drop Highlight Indicator */}
         {isDropTarget && (
           <div 
-            className="absolute inset-0 bg-indigo-600/30 border-2 border-dashed border-indigo-400 flex items-center justify-center z-50 pointer-events-none backdrop-blur-xs"
+            className="absolute inset-0 border-2 border-dashed flex items-center justify-center z-50 pointer-events-none backdrop-blur-xs"
+            style={{
+              backgroundColor: `${accentColor}22`,
+              borderColor: accentColor
+            }}
           >
-            <div className="bg-slate-900/95 text-white px-3 py-1.5 rounded-lg shadow-2xl text-xs font-bold border border-indigo-400 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-400" />
+            <div
+              className="bg-[#040710]/95 text-white px-3 py-1.5 rounded-lg shadow-2xl text-xs font-bold border flex items-center gap-2"
+              style={{ borderColor: accentColor }}
+            >
+              <Sparkles className="w-4 h-4" style={{ color: accentColor }} />
               <span>Soltar en este Cuadrante</span>
             </div>
           </div>

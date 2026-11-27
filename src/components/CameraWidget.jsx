@@ -17,7 +17,7 @@ export default function CameraWidget({
   defaultMirrored = false,
   defaultDeviceIndex = 0,
   defaultFit = 'cover',
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   const videoRef = useRef(null);

@@ -52,7 +52,7 @@ export default function LayoutPresetsModal({
   isOpen = false,
   onClose,
   onApplyPreset,
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   if (!isOpen) return null;

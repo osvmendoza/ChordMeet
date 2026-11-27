@@ -5,7 +5,7 @@ import { midiToVexFlowSpec } from '../utils/musicHelpers';
 export default function Staff({
   activeNotes = [],
   keySignature = 'C',
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   const containerRef = useRef(null);

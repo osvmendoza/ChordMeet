@@ -8,11 +8,17 @@ export default {
   theme: {
     extend: {
       colors: {
+        brand: {
+          cyan: '#00fff2',
+          blue: '#0068ff',
+          magenta: '#ff007a',
+          ebony: '#040710',
+        },
         piano: {
-          dark: '#0f172a',
-          surface: '#1e293b',
-          border: '#334155',
-          gold: '#f59e0b',
+          dark: '#040710',
+          surface: '#081022',
+          border: '#1b2a4a',
+          accent: '#00fff2',
         }
       },
       fontFamily: {

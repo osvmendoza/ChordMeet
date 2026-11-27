@@ -40,7 +40,7 @@ export default function VSCodeTabHeader({
   onSelectTab,
   onMoveWidget,               // (widgetId, targetZone)
   onCloseWidget,              // (widgetId)
-  accentColor = '#38bdf8',
+  accentColor = '#00fff2',
   theme = null
 }) {
   const [menuOpenForWidget, setMenuOpenForWidget] = useState(null);
