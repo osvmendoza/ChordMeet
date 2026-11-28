@@ -394,7 +394,7 @@ export default function App() {
 
       case 'metronome':
         return (
-          <div className="w-full h-full flex items-center justify-center p-3">
+          <div className="w-full h-full overflow-y-auto flex justify-center p-2.5">
             <Metronome accentColor={accentColor} theme={activeTheme} />
           </div>
         );

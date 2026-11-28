@@ -4,7 +4,9 @@ class PianoSynth {
     this.audioCtx = null;
     this.activeVoices = new Map();
     this.masterGain = null;
+    this.metronomeGain = null;
     this.volume = 0.3;
+    this.metronomeVolume = 0.75;
     this.enabled = true;
   }
 
@@ -14,12 +16,29 @@ class PianoSynth {
       if (AudioContextClass) {
         this.audioCtx = new AudioContextClass();
         this.masterGain = this.audioCtx.createGain();
-        this.masterGain.gain.setValueAtTime(this.volume, this.audioCtx.currentTime);
+        this.masterGain.gain.setValueAtTime(this.enabled ? this.volume : 0, this.audioCtx.currentTime);
         this.masterGain.connect(this.audioCtx.destination);
+
+        // Dedicated metronome bus independent from virtual piano mute state
+        this.metronomeGain = this.audioCtx.createGain();
+        this.metronomeGain.gain.setValueAtTime(this.metronomeVolume, this.audioCtx.currentTime);
+        this.metronomeGain.connect(this.audioCtx.destination);
       }
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
       this.audioCtx.resume();
+    }
+  }
+
+  getCurrentTime() {
+    this.init();
+    return this.audioCtx ? this.audioCtx.currentTime : 0;
+  }
+
+  setMetronomeVolume(vol) {
+    this.metronomeVolume = Math.max(0, Math.min(1, vol));
+    if (this.metronomeGain && this.audioCtx) {
+      this.metronomeGain.gain.setValueAtTime(this.metronomeVolume, this.audioCtx.currentTime);
     }
   }
 
@@ -121,27 +140,33 @@ class PianoSynth {
     this.activeVoices.delete(midi);
   }
 
-  // Metronome tick sound (clean wooden click)
-  playMetronomeClick(isDownbeat = false) {
+  // Sample-accurate scheduled metronome click (TIC on downbeat, tac on weak beats)
+  scheduleMetronomeClick(time, isDownbeat = false, volume = 1.0) {
     this.init();
-    if (!this.audioCtx) return;
+    if (!this.audioCtx || !this.metronomeGain) return;
 
-    const now = this.audioCtx.currentTime;
+    const startAt = Math.max(this.audioCtx.currentTime, time);
     const osc = this.audioCtx.createOscillator();
     const gain = this.audioCtx.createGain();
 
     osc.type = 'sine';
-    // Higher pitch for first beat / downbeat
-    osc.frequency.setValueAtTime(isDownbeat ? 1200 : 800, now);
+    osc.frequency.setValueAtTime(isDownbeat ? 1200 : 800, startAt);
 
-    gain.gain.setValueAtTime(isDownbeat ? 0.35 : 0.2, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    const peak = (isDownbeat ? 0.5 : 0.28) * Math.max(0, Math.min(1, volume));
+    gain.gain.setValueAtTime(0.0001, startAt);
+    gain.gain.linearRampToValueAtTime(Math.max(0.0001, peak), startAt + 0.002);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.085);
 
     osc.connect(gain);
-    gain.connect(this.masterGain);
+    gain.connect(this.metronomeGain);
 
-    osc.start(now);
-    osc.stop(now + 0.045);
+    osc.start(startAt);
+    osc.stop(startAt + 0.095);
+  }
+
+  // Immediate metronome click (backwards compatible)
+  playMetronomeClick(isDownbeat = false) {
+    this.scheduleMetronomeClick(this.getCurrentTime(), isDownbeat, 1.0);
   }
 
   // Cut all active voices
